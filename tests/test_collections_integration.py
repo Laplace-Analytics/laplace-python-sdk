@@ -1,7 +1,9 @@
 """Integration tests for collections client."""
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from laplace import LaplaceClient
 from laplace.models import Collection, CollectionDetail, CollectionStock
 from tests.conftest import MockResponse
@@ -9,7 +11,7 @@ from tests.conftest import MockResponse
 
 class TestCollectionsIntegration:
     """Integration tests for collections client with real API responses."""
-    
+
     @patch('httpx.Client')
     def test_get_collections(self, mock_httpx_client):
         """Test getting collections with real API response."""
@@ -43,20 +45,20 @@ class TestCollectionsIntegration:
                 "assetClass": "crypto"
             }
         ]
-        
+
         mock_client_instance = Mock()
         mock_client_instance.get.return_value = MockResponse(mock_response_data)
         mock_httpx_client.return_value = mock_client_instance
-        
+
         client = LaplaceClient(api_key="test-key")
-        
+
         with patch.object(client, 'get', return_value=mock_response_data):
             collections = client.collections.get_collections(region="tr", locale="en")
-        
+
         # Assertions
         assert len(collections) == 3
         assert isinstance(collections[0], Collection)
-        
+
         # Test Large Cap collection
         large_cap = collections[0]
         assert large_cap.id == "620f455a0187ade00bb0d55f"
@@ -66,14 +68,14 @@ class TestCollectionsIntegration:
         assert large_cap.asset_class == "equity"
         assert "en-buyukler_original.webp" in large_cap.image_url
         assert "en-buyukler_avatar.webp" in large_cap.avatar_url
-        
+
         # Test Clothing collection
         clothing = collections[1]
         assert clothing.id == "64fee022215898698650bfc9"
         assert clothing.title == "Clothing"
         assert clothing.num_stocks == 5
         assert clothing.asset_class == "equity"
-        
+
         # Test Crypto collection
         crypto = collections[2]
         assert crypto.id == "622df02a38290f0011081ab9"
@@ -126,20 +128,20 @@ class TestCollectionsIntegration:
                 }
             ]
         }
-        
+
         mock_client_instance = Mock()
         mock_client_instance.get.return_value = MockResponse(mock_response_data)
         mock_httpx_client.return_value = mock_client_instance
-        
+
         client = LaplaceClient(api_key="test-key")
-        
+
         with patch.object(client, 'get', return_value=mock_response_data):
             collection_detail = client.collections.get_collection_detail(
                 collection_id="620f455a0187ade00bb0d55f",
                 region="tr",
                 locale="en"
             )
-        
+
         # Assertions
         assert isinstance(collection_detail, CollectionDetail)
         assert collection_detail.id == "620f455a0187ade00bb0d55f"
@@ -149,11 +151,11 @@ class TestCollectionsIntegration:
         assert collection_detail.asset_class == "equity"
         assert "en-buyukler_original.webp" in collection_detail.image_url
         assert "en-buyukler_avatar.webp" in collection_detail.avatar_url
-        
+
         # Test stocks within collection
         assert len(collection_detail.stocks) == 3
         assert all(isinstance(stock, CollectionStock) for stock in collection_detail.stocks)
-        
+
         # Test first stock (SASA)
         sasa = collection_detail.stocks[0]
         assert sasa.id == "61dd0d670ec2114146342fa5"
@@ -162,14 +164,14 @@ class TestCollectionsIntegration:
         assert sasa.asset_type == "stock"
         assert sasa.sector_id == "65533e047844ee7afe9941c0"
         assert sasa.industry_id == "65533e441fa5c7b58afa097a"
-        
+
         # Test second stock (Koç Holding)
         koc = collection_detail.stocks[1]
         assert koc.id == "61dd0d7a0ec2114146343014"
         assert koc.name == "Koç Holding"
         assert koc.symbol == "KCHOL"
         assert koc.asset_type == "stock"
-        
+
         # Test third stock (Garanti Bank)
         garan = collection_detail.stocks[2]
         assert garan.id == "61dd0d4b0ec2114146342f6a"
@@ -191,18 +193,18 @@ class TestCollectionsIntegration:
                 "assetClass": "equity"
             }
         ]
-        
+
         mock_client_instance = Mock()
         mock_client_instance.get.return_value = MockResponse(mock_response_data)
         mock_httpx_client.return_value = mock_client_instance
-        
+
         client = LaplaceClient(api_key="test-key")
-        
+
         with patch.object(client, 'get', return_value=mock_response_data):
             collections = client.collections.get_collections(region="us", locale="en")
-        
+
         collection = collections[0]
-        
+
         # Test field aliases work
         assert collection.image_url == "https://example.com/image.jpg"  # imageUrl -> image_url
         assert collection.avatar_url == "https://example.com/avatar.jpg"  # avatarUrl -> avatar_url
@@ -231,22 +233,22 @@ class TestCollectionsIntegration:
                 }
             ]
         }
-        
+
         mock_client_instance = Mock()
         mock_client_instance.get.return_value = MockResponse(mock_response_data)
         mock_httpx_client.return_value = mock_client_instance
-        
+
         client = LaplaceClient(api_key="test-key")
-        
+
         with patch.object(client, 'get', return_value=mock_response_data):
             collection_detail = client.collections.get_collection_detail(
                 collection_id="test-collection-id",
                 region="tr",
                 locale="en"
             )
-        
+
         stock = collection_detail.stocks[0]
-        
+
         # Test field aliases work for stocks
         assert stock.sector_id == "test-sector-id"  # sectorId -> sector_id
         assert stock.asset_type == "stock"  # assetType -> asset_type
@@ -255,12 +257,12 @@ class TestCollectionsIntegration:
 
 class TestCollectionsRealIntegration:
     """Real integration tests (requires API key)."""
-    
+
     @pytest.mark.integration
     def test_real_get_collections(self, integration_client):
         """Test real API call for getting collections."""
         collections = integration_client.collections.get_collections(region="tr", locale="en")
-        
+
         assert len(collections) > 0
         assert all(isinstance(collection, Collection) for collection in collections)
         assert all(collection.id for collection in collections)
@@ -268,23 +270,23 @@ class TestCollectionsRealIntegration:
         assert all(collection.region for collection in collections)
         assert all(collection.num_stocks >= 0 for collection in collections)
         assert all(collection.asset_class for collection in collections)
-    
+
     @pytest.mark.integration
     def test_real_get_collection_detail(self, integration_client):
         """Test real API call for getting collection detail."""
         # First get a collection to get a valid ID
         collections = integration_client.collections.get_collections(region="tr", locale="en")
         assert len(collections) > 0
-        
+
         collection_id = collections[0].id
-        
+
         # Now get the detail
         collection_detail = integration_client.collections.get_collection_detail(
             collection_id=collection_id,
             region="tr",
             locale="en"
         )
-        
+
         assert isinstance(collection_detail, CollectionDetail)
         assert collection_detail.id == collection_id
         assert collection_detail.title
@@ -292,7 +294,7 @@ class TestCollectionsRealIntegration:
         assert collection_detail.num_stocks >= 0
         assert collection_detail.asset_class
         assert isinstance(collection_detail.stocks, list)
-        
+
         # Test stocks if any exist
         if collection_detail.stocks:
             assert all(isinstance(stock, CollectionStock) for stock in collection_detail.stocks)

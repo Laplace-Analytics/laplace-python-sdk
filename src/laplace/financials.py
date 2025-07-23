@@ -1,16 +1,17 @@
 """Financials client for Laplace API."""
 
 from typing import List
+
 from .models import (
-    RatioComparisonPeerType,
-    FinancialSheetType,
-    FinancialSheetPeriod,
     Currency,
-    StockPeerFinancialRatioComparison,
+    FinancialSheetDate,
+    FinancialSheetPeriod,
+    FinancialSheetType,
+    HistoricalFinancialSheets,
+    RatioComparisonPeerType,
     StockHistoricalRatios,
     StockHistoricalRatiosDescription,
-    HistoricalFinancialSheets,
-    FinancialSheetDate,
+    StockPeerFinancialRatioComparison,
 )
 
 

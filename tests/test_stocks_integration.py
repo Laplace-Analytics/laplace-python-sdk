@@ -1,17 +1,21 @@
 """Integration tests for stocks client."""
 
-import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
+
 from laplace import LaplaceClient
-from laplace.stocks import HistoricalPriceInterval
-from laplace.models import Stock, StockDetail, StockPriceData, PriceCandle, StockRules, StockRestriction
+from laplace.models import (
+    Stock,
+    StockDetail,
+)
 from tests.conftest import MockResponse
 
 
 class TestStocksIntegration:
     """Integration tests for stocks client with real API responses."""
-    
+
     @patch('httpx.Client')
     def test_get_all_stocks(self, mock_httpx_client):
         """Test getting all stocks with real API response."""
@@ -48,17 +52,17 @@ class TestStocksIntegration:
                 "active": True
             }
         ]
-        
+
         mock_client_instance = Mock()
         mock_client_instance.get.return_value = MockResponse(mock_response_data)
         mock_httpx_client.return_value = mock_client_instance
-        
+
         client = LaplaceClient(api_key="test-key")
-        
+
         # Mock the _client.get method
         with patch.object(client, 'get', return_value=mock_response_data):
             stocks = client.stocks.get_all(region="us", page=1, page_size=5)
-        
+
         # Assertions
         assert len(stocks) == 3
         assert isinstance(stocks[0], Stock)
@@ -68,11 +72,11 @@ class TestStocksIntegration:
         assert stocks[0].active is True
         assert stocks[0].sector_id == "65533e047844ee7afe9941bd"
         assert stocks[0].industry_id == "65533e441fa5c7b58afa0962"
-        
+
         assert stocks[1].symbol == "AA"
         assert stocks[1].name == "Alcoa Corp"
         assert stocks[1].asset_type == "stock"
-        
+
         # Test ETF as well
         assert stocks[2].symbol == "AAA"
         assert stocks[2].asset_type == "etf"
@@ -105,20 +109,20 @@ class TestStocksIntegration:
             },
             "active": True
         }
-        
+
         mock_client_instance = Mock()
         mock_client_instance.get.return_value = MockResponse(mock_response_data)
         mock_httpx_client.return_value = mock_client_instance
-        
+
         client = LaplaceClient(api_key="test-key")
-        
+
         with patch.object(client, 'get', return_value=mock_response_data):
             stock_detail = client.stocks.get_detail_by_symbol(
-                symbol="AAPL", 
-                region="us", 
+                symbol="AAPL",
+                region="us",
                 asset_class="equity"
             )
-        
+
         # Assertions
         assert isinstance(stock_detail, StockDetail)
         assert stock_detail.symbol == "AAPL"
@@ -129,18 +133,18 @@ class TestStocksIntegration:
         assert stock_detail.active is True
         assert stock_detail.sector_id == "65533e047844ee7afe9941bf"
         assert stock_detail.industry_id == "65533e441fa5c7b58afa0972"
-        
+
         # Test description fields
         assert "Apple Inc. is a leading global technology company" in stock_detail.description
         assert "iPhone, iPad, and Apple Music" in stock_detail.short_description
-        
+
         # Test localized descriptions
         assert "def" in stock_detail.localized_description
         assert "en" in stock_detail.localized_description
         assert "tr" in stock_detail.localized_description
         assert "en" in stock_detail.localized_short_description
         assert "tr" in stock_detail.localized_short_description
-        
+
         # Test Turkish descriptions
         assert "teknoloji şirketidir" in stock_detail.localized_description["tr"]
         assert "tüketici elektroniği" in stock_detail.localized_short_description["tr"]
@@ -150,9 +154,9 @@ class TestStocksIntegration:
         """Test that tick rules raises error for non-TR region."""
         mock_client_instance = Mock()
         mock_httpx_client.return_value = mock_client_instance
-        
+
         client = LaplaceClient(api_key="test-key")
-        
+
         with pytest.raises(ValueError, match="Tick rules endpoint only works with the 'tr' region"):
             client.stocks.get_tick_rules(region="us")
 
@@ -161,9 +165,9 @@ class TestStocksIntegration:
         """Test that restrictions raises error for non-TR region."""
         mock_client_instance = Mock()
         mock_httpx_client.return_value = mock_client_instance
-        
+
         client = LaplaceClient(api_key="test-key")
-        
+
         with pytest.raises(ValueError, match="Restrictions endpoint only works with the 'tr' region"):
             client.stocks.get_restrictions(region="us")
 
@@ -172,39 +176,39 @@ class TestStocksIntegration:
         """Test datetime formatting for interval endpoint."""
         mock_client_instance = Mock()
         mock_httpx_client.return_value = mock_client_instance
-        
+
         client = LaplaceClient(api_key="test-key")
-        
+
         # Test the internal datetime formatting
         test_dt = datetime(2024, 10, 15, 14, 30, 45)
         formatted = client.stocks._format_datetime(test_dt)
-        
+
         assert formatted == "2024-10-15 14:30:45"
 
 
 class TestStocksRealIntegration:
     """Real integration tests (requires API key)."""
-    
+
     @pytest.mark.integration
     def test_real_get_all_stocks(self, integration_client):
         """Test real API call for getting all stocks."""
         stocks = integration_client.stocks.get_all(region="us", page=1, page_size=5)
-        
+
         assert len(stocks) <= 5  # Should return at most 5 stocks
         assert all(isinstance(stock, Stock) for stock in stocks)
         assert all(stock.symbol for stock in stocks)  # All should have symbols
         assert all(stock.name for stock in stocks)  # All should have names
         assert all(stock.asset_type for stock in stocks)  # All should have asset types
-    
+
     @pytest.mark.integration
     def test_real_get_stock_detail_by_symbol(self, integration_client):
         """Test real API call for getting stock detail by symbol."""
         stock_detail = integration_client.stocks.get_detail_by_symbol(
-            symbol="AAPL", 
-            region="us", 
+            symbol="AAPL",
+            region="us",
             asset_class="equity"
         )
-        
+
         assert isinstance(stock_detail, StockDetail)
         assert stock_detail.symbol == "AAPL"
         assert stock_detail.region == "us"

@@ -1,18 +1,19 @@
 """Integration tests for financials client."""
 
 from unittest.mock import Mock, patch
+
 from laplace import LaplaceClient
 from laplace.models import (
+    Currency,
+    FinancialSheetDate,
+    FinancialSheetPeriod,
+    FinancialSheetType,
+    HistoricalFinancialSheets,
     HistoricalRatiosFormat,
     RatioComparisonPeerType,
-    FinancialSheetType,
-    FinancialSheetPeriod,
-    Currency,
-    StockPeerFinancialRatioComparison,
     StockHistoricalRatios,
     StockHistoricalRatiosDescription,
-    HistoricalFinancialSheets,
-    FinancialSheetDate,
+    StockPeerFinancialRatioComparison,
 )
 from tests.conftest import MockResponse
 

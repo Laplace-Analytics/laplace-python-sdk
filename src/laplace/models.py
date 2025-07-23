@@ -1,7 +1,8 @@
 """Pydantic models for Laplace API responses."""
 
 from enum import Enum
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -42,11 +43,11 @@ class StockDetail(BaseModel):
 class PriceCandle(BaseModel):
     """Individual price candle data."""
 
-    c: float  # close
-    d: float  # timestamp
-    h: float  # high
-    l: float  # low
-    o: float  # open
+    close: float = Field(alias="c")
+    date: float = Field(alias="d")
+    high: float = Field(alias="h")
+    low: float = Field(alias="l")
+    open: float = Field(alias="o")
 
 
 class StockPriceData(BaseModel):
