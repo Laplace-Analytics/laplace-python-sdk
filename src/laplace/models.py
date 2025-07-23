@@ -1,7 +1,7 @@
 """Pydantic models for Laplace API responses."""
 
-from typing import List, Optional, Dict, Any
-from datetime import datetime
+from enum import Enum
+from typing import List, Optional, Dict
 from pydantic import BaseModel, Field
 
 
@@ -208,3 +208,98 @@ class SectorDetail(BaseModel):
     asset_class: str = Field(alias="assetClass")
     
     model_config = {"populate_by_name": True}
+
+
+
+class RatioComparisonPeerType(str, Enum):
+    """Peer type for ratio comparison."""
+    INDUSTRY = "industry"
+    SECTOR = "sector"
+
+class HistoricalRatiosFormat(str, Enum):
+    """Format for historical ratios."""
+    CURRENCY = "currency"
+    PERCENTAGE = "percentage"
+    DECIMAL = "decimal"
+
+class FinancialSheetType(str, Enum):
+    """Type of financial sheet."""
+    INCOME_STATEMENT = "incomeStatement"
+    BALANCE_SHEET = "balanceSheet"
+    CASH_FLOW = "cashFlowStatement"
+
+class FinancialSheetPeriod(str, Enum):
+    """Period type for financial sheets."""
+    ANNUAL = "annual"
+    QUARTERLY = "quarterly"
+    CUMULATIVE = "cumulative"
+
+class Currency(str, Enum):
+    """Currency code."""
+    USD = "USD"
+    TRY = "TRY"
+    EUR = "EUR"
+
+class StockPeerFinancialRatioComparisonData(BaseModel):
+    """Peer financial ratio comparison data."""
+    slug: str
+    value: float
+    average: float
+
+class StockPeerFinancialRatioComparison(BaseModel):
+    """Stock peer financial ratio comparison."""
+    metric_name: str = Field(alias="metricName")
+    normalized_value: float = Field(alias="normalizedValue")
+    data: List[StockPeerFinancialRatioComparisonData]
+
+class StockHistoricalRatiosData(BaseModel):
+    """Stock historical ratios data."""
+    period: str
+    value: float
+    sector_mean: float = Field(alias="sectorMean")
+
+class StockHistoricalRatios(BaseModel):
+    """Stock historical ratios."""
+    slug: str
+    final_value: float = Field(alias="finalValue")
+    three_year_growth: float = Field(alias="threeYearGrowth")
+    year_growth: float = Field(alias="yearGrowth")
+    final_sector_value: float = Field(alias="finalSectorValue")
+    currency: Currency
+    format: HistoricalRatiosFormat
+    name: str
+    items: List[StockHistoricalRatiosData]
+
+class StockHistoricalRatiosDescription(BaseModel):
+    """Stock historical ratios description."""
+    id: int
+    format: str
+    currency: str
+    slug: str
+    created_at: str = Field(alias="createdAt")
+    updated_at: str = Field(alias="updatedAt")
+    name: str
+    description: str
+    locale: str
+    is_realtime: bool = Field(alias="isRealtime")
+
+class HistoricalFinancialSheetRow(BaseModel):
+    """Historical financial sheet row."""
+    description: str
+    value: float
+    line_code_id: int = Field(alias="lineCodeId")
+    indent_level: int = Field(alias="indentLevel")
+
+class HistoricalFinancialSheet(BaseModel):
+    """Historical financial sheet."""
+    period: str
+    items: List[HistoricalFinancialSheetRow]
+
+class HistoricalFinancialSheets(BaseModel):
+    """Historical financial sheets."""
+    sheets: List[HistoricalFinancialSheet]
+
+class FinancialSheetDate(BaseModel):
+    """Financial sheet date."""
+    day: int
+    year: int
