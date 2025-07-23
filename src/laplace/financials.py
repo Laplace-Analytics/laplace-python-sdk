@@ -72,7 +72,7 @@ class FinancialsClient:
             sheet_type == FinancialSheetType.BALANCE_SHEET
             and period != FinancialSheetPeriod.CUMULATIVE
         ):
-            raise ValueError("Balance sheet is only available for cumulative period")
+            raise ValueError("balance sheet is only available for cumulative period")
 
         params = {
             "symbol": symbol,
