@@ -83,5 +83,5 @@ class FinancialsClient:
             "currency": currency.value,
             "region": region,
         }
-        resp = self._client.get("v2/stock/historical-financial-sheets", params=params)
+        resp = self._client.get("v3/stock/historical-financial-sheets", params=params)
         return HistoricalFinancialSheets(**resp)
