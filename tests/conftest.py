@@ -1,8 +1,10 @@
 """Test configuration and fixtures."""
 
 import os
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, patch
+
 from laplace import LaplaceClient
 
 
@@ -23,15 +25,15 @@ def integration_client():
 
 class MockResponse:
     """Mock response class for testing."""
-    
+
     def __init__(self, json_data, status_code=200):
         self.json_data = json_data
         self.status_code = status_code
         self.reason_phrase = "OK"
-    
+
     def json(self):
         return self.json_data
-    
+
     def raise_for_status(self):
         if self.status_code >= 400:
             from httpx import HTTPStatusError

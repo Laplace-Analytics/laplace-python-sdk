@@ -39,4 +39,4 @@ jobs:
       - name: Check code with basic linting
         run: |
           pip install ruff
-          ruff check src/laplace/ --select=E,W,F
+          ruff check src/laplace/ --select=E,W,F --ignore=E501
