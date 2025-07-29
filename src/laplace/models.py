@@ -5,6 +5,18 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from typing import Literal
+
+Region = Literal[
+    "tr",
+    "us",
+]
+
+Locale = Literal[
+    "tr",
+    "en",
+]
+
 
 class Stock(BaseModel):
     """Stock model from the stocks API."""
@@ -25,7 +37,7 @@ class StockDetail(BaseModel):
     id: str
     name: str
     active: bool
-    region: str
+    region: Region
     symbol: str
     sector_id: str = Field(alias="sectorId")
     asset_type: str = Field(alias="assetType")
@@ -315,7 +327,7 @@ class StockHistoricalRatiosDescription(BaseModel):
     updated_at: str = Field(alias="updatedAt")
     name: str
     description: str
-    locale: str
+    locale: Locale
     is_realtime: bool = Field(alias="isRealtime")
 
 
