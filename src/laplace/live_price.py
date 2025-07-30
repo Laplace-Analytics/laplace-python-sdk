@@ -1,142 +1,179 @@
 """Live price streaming functionality for Laplace API."""
 
+import asyncio
 import json
 import uuid
-from typing import AsyncGenerator
-
+from typing import AsyncGenerator, Optional, Union
 import httpx
-from pydantic import BaseModel, Field
+from laplace.models import Region, BISTStockLiveData, USStockLiveData
 
-from laplace.models import Region
-
-from .base import LaplaceAPIError
+LivePriceData = Union[BISTStockLiveData, USStockLiveData]
 
 
-class BISTStockLiveData(BaseModel):
-    """BIST (Turkish) stock live data model."""
+class LivePriceResult:
+    """Result wrapper for live price data."""
 
-    symbol: str = Field(alias="s")
-    daily_percent_change: float = Field(alias="ch")
-    close_price: float = Field(alias="p")
-    date: int = Field(alias="d")
+    def __init__(self, data: Optional[LivePriceData] = None, error: Optional[str] = None):
+        self.data = data
+        self.error = error
+
+    @property
+    def is_error(self) -> bool:
+        return self.error is not None
 
 
-class USStockLiveData(BaseModel):
-    """US stock live data model."""
+class LivePriceStream:
+    """Handles live price streaming for a specific region."""
 
-    symbol: str = Field(alias="s")
-    price: float = Field(alias="p")
-    date: int = Field(alias="d")
+    def __init__(self, base_client, region: Region):
+        self.base_client = base_client
+        self.region = region
+        self._task: Optional[asyncio.Task] = None
+        self._queue: Optional[asyncio.Queue] = None
+        self._is_closed = False
+        self._symbols: list[str] = []
+
+    async def subscribe(self, symbols: list[str]) -> None:
+        """Subscribe to live price updates for given symbols."""
+        await self._cleanup_existing_stream()
+
+        self._symbols = symbols
+        self._queue = asyncio.Queue()
+        self._is_closed = False
+        self._task = asyncio.create_task(self._start_streaming())
+
+    async def receive(self) -> AsyncGenerator[LivePriceResult, None]:
+        """Receive live price data from the stream."""
+        if not self._queue:
+            raise RuntimeError("Not subscribed. Call subscribe() first.")
+
+        while not self._is_closed:
+            try:
+                result = await asyncio.wait_for(self._queue.get(), timeout=1.0)
+                yield result
+            except asyncio.TimeoutError:
+                continue
+            except asyncio.CancelledError:
+                break
+
+    async def close(self) -> None:
+        """Close the stream and cleanup resources."""
+        if self._is_closed:
+            return
+
+        self._is_closed = True
+        await self._cleanup_existing_stream()
+
+    async def _cleanup_existing_stream(self) -> None:
+        """Cancel and cleanup existing streaming task."""
+        if self._task and not self._task.done():
+            self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
+
+    def _build_stream_url(self) -> str:
+        """Build the streaming URL for the given symbols and region."""
+        stream_id = str(uuid.uuid4())
+        symbols_param = ",".join(self._symbols) if self._symbols else ""
+        return f"{self.base_client.base_url}/v1/stock/price/live?filter={symbols_param}&region={self.region}&stream={stream_id}"
+
+    def _create_model_from_data(self, data: dict) -> LivePriceData:
+        """Create appropriate data model based on region."""
+        if self.region == "tr":
+            return BISTStockLiveData(**data)
+        elif self.region == "us":
+            return USStockLiveData(**data)
+        else:
+            raise ValueError(f"Unsupported region: {self.region}")
+
+    async def _start_streaming(self) -> None:
+        """Start the SSE streaming connection."""
+        url = self._build_stream_url()
+        headers = {
+            "Accept": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Authorization": f"Bearer {self.base_client.api_key}",
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                async with client.stream("GET", url, headers=headers) as response:
+                    if response.status_code != 200:
+                        error_body = await response.aread()
+                        error_msg = f"Stream failed: {response.status_code} - {error_body.decode()}"
+                        await self._put_error(error_msg)
+                        return
+
+                    await self._process_stream_lines(response)
+
+        except (httpx.TimeoutException, httpx.ConnectError) as e:
+            await self._put_error(f"Connection error: {e}")
+        except Exception as e:
+            await self._put_error(f"Streaming error: {e}")
+        finally:
+            self._is_closed = True
+
+    async def _process_stream_lines(self, response) -> None:
+        """Process individual lines from the SSE stream."""
+        async for line in response.aiter_lines():
+            if self._is_closed:
+                break
+
+            if not line.startswith("data:"):
+                continue
+
+            try:
+                # Parse the JSON data after "data:" prefix
+                json_data = line[5:]  # Remove "data:" prefix
+                parsed_data = json.loads(json_data)
+
+                # Create appropriate model and put in queue
+                model_data = self._create_model_from_data(parsed_data)
+                result = LivePriceResult(data=model_data)
+                await self._queue.put(result)
+
+            except (json.JSONDecodeError, Exception) as e:
+                await self._put_error(f"Error processing data: {e}")
+                break  # Stop processing on errors
+
+    async def _put_error(self, error_message: str) -> None:
+        """Put an error result in the queue."""
+        if self._queue:
+            error_result = LivePriceResult(error=error_message)
+            await self._queue.put(error_result)
 
 
 class LivePriceClient:
-    """Client for live price streaming functionality."""
+    """Main client for live price functionality."""
 
     def __init__(self, base_client):
-        """Initialize the live price client.
-
-        Args:
-            base_client: The base Laplace client
-        """
         self.base_client = base_client
 
-    def _get_live_price_url(self, symbols: list[str], region: Region) -> str:
-        """Construct the live price streaming URL.
+    async def get_live_price_for_bist(self, symbols: list[str]) -> LivePriceStream:
+        """Start streaming BIST stock prices.
 
         Args:
-            symbols: List of stock symbols
-            region: Region code (TR, US, etc.)
+            symbols: List of BIST stock symbols (empty for all stocks)
 
         Returns:
-            Constructed URL for live price streaming
+            LivePriceStream for BIST stocks
         """
-        stream_id = str(uuid.uuid4())
-        symbols_str = ",".join(symbols)
-        return f"{self.base_client.base_url}/v1/stock/price/live?filter={symbols_str}&region={region}&stream={stream_id}"
+        stream = LivePriceStream(self.base_client, "tr")
+        await stream.subscribe(symbols)
+        return stream
 
-    async def _stream_sse_events(self, url: str, headers: dict) -> AsyncGenerator[dict, None]:
-        """Stream Server-Sent Events from the API.
+    async def get_live_price_for_us(self, symbols: list[str]) -> LivePriceStream:
+        """Start streaming US stock prices.
 
         Args:
-            url: The SSE endpoint URL
-            headers: Request headers including authorization
+            symbols: List of US stock symbols (empty for all stocks)
 
-        Yields:
-            Parsed event data as dictionaries
+        Returns:
+            LivePriceStream for US stocks
         """
-        async with httpx.AsyncClient() as client:
-            async with client.stream("GET", url, headers=headers) as response:
-                if response.status_code != 200:
-                    error_body = await response.aread()
-                    raise LaplaceAPIError(
-                        message=f"Live price stream failed: {response.status_code}",
-                        status_code=response.status_code,
-                        response={"error": error_body.decode()},
-                    )
-
-                async for line in response.aiter_lines():
-                    if line.startswith("data:"):
-                        data = line[5:]  # Remove "data:" prefix
-                        try:
-                            yield json.loads(data)
-                        except json.JSONDecodeError as e:
-                            # Log error but continue streaming
-                            print(f"Error parsing SSE data: {e}")
-                            continue
-
-    async def get_live_price_for_bist(
-        self, symbols: list[str]
-    ) -> AsyncGenerator[BISTStockLiveData, None]:
-        """Stream real-time price data for BIST (Turkish) stock symbols.
-
-        Args:
-            symbols: List of BIST stock symbols
-
-        Yields:
-            BISTStockLiveData objects with live price information
-        """
-        print(f"Getting live price for BIST symbols: {symbols}")
-        print(f"API Key: {self.base_client.api_key}")
-        print(f"Base URL: {self.base_client.base_url}")
-        print(f"URL: {self._get_live_price_url(symbols, 'TR')}")
-
-        url = self._get_live_price_url(symbols, "tr")
-        headers = {
-            "Accept": "text/event-stream",
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "Authorization": f"Bearer {self.base_client.api_key}",
-        }
-
-        async for event_data in self._stream_sse_events(url, headers):
-            try:
-                yield BISTStockLiveData(**event_data)
-            except Exception as e:
-                print(f"Error parsing BIST live data: {e}")
-                continue
-
-    async def get_live_price_for_us(
-        self, symbols: list[str]
-    ) -> AsyncGenerator[USStockLiveData, None]:
-        """Stream real-time price data for US stock symbols.
-
-        Args:
-            symbols: List of US stock symbols
-
-        Yields:
-            USStockLiveData objects with live price information
-        """
-        url = self._get_live_price_url(symbols, "us")
-        headers = {
-            "Accept": "text/event-stream",
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "Authorization": f"Bearer {self.base_client.api_key}",
-        }
-
-        async for event_data in self._stream_sse_events(url, headers):
-            try:
-                yield USStockLiveData(**event_data)
-            except Exception as e:
-                print(f"Error parsing US live data: {e}")
-                continue
+        stream = LivePriceStream(self.base_client, "us")
+        await stream.subscribe(symbols)
+        return stream

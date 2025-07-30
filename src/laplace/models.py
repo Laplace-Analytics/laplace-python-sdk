@@ -359,3 +359,20 @@ class FinancialSheetDate(BaseModel):
     day: int
     month: int
     year: int
+
+
+class BISTStockLiveData(BaseModel):
+    """BIST (Turkish) stock live data model."""
+
+    symbol: str = Field(alias="s")
+    daily_percent_change: float = Field(alias="ch")
+    close_price: float = Field(alias="p")
+    date: int = Field(alias="d")
+
+
+class USStockLiveData(BaseModel):
+    """US stock live data model."""
+
+    symbol: str = Field(alias="s")
+    price: float = Field(alias="p")
+    date: int = Field(alias="d")
