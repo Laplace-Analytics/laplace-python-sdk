@@ -4,23 +4,43 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
 
-from .models import Locale, PriceCandle, Region, Stock, StockDetail, StockPriceData, StockRestriction, StockRules
+from .models import (
+    Locale,
+    PriceCandle,
+    Region,
+    Stock,
+    StockDetail,
+    StockPriceData,
+    StockRestriction,
+    StockRules,
+)
+
+
+class IntervalPrice(Enum):
+    """Interval price options."""
+
+    ONE_MINUTE = "1m"
+    FIVE_MINUTES = "5m"
+    FIFTEEN_MINUTES = "15m"
+    THIRTY_MINUTES = "30m"
+    ONE_HOUR = "1H"
+    TWO_HOURS = "2H"
+    ONE_DAY = "1d"
+    FIVE_DAYS = "5d"
+    SEVEN_DAYS = "7d"
+    THIRTY_DAYS = "30d"
 
 
 class HistoricalPriceInterval(Enum):
     """Historical price interval options."""
 
-    ONE_MINUTE = "1m"
-    THREE_MINUTE = "3m"
-    FIVE_MINUTE = "5m"
-    FIFTEEN_MINUTE = "15m"
-    THIRTY_MINUTE = "30m"
-    ONE_HOUR = "1h"
-    TWO_HOUR = "2h"
-    ONE_DAY = "1d"
-    FIVE_DAY = "5d"
-    SEVEN_DAY = "7d"
-    THIRTY_DAY = "30d"
+    ONE_DAY = "1D"
+    ONE_WEEK = "1W"
+    ONE_MONTH = "1M"
+    THREE_MONTH = "3M"
+    ONE_YEAR = "1Y"
+    TWO_YEAR = "2Y"
+    THREE_YEAR = "3Y"
 
 
 class StocksClient:
@@ -115,7 +135,7 @@ class StocksClient:
         region: Region,
         from_date: datetime,
         to_date: datetime,
-        interval: Union[HistoricalPriceInterval, str],
+        interval: Union[IntervalPrice, str],
     ) -> List[PriceCandle]:
         """Retrieve the historical price of a stock with custom date range and interval.
 
@@ -129,9 +149,7 @@ class StocksClient:
         Returns:
             List[PriceCandle]: List of price candles
         """
-        interval_value = (
-            interval.value if isinstance(interval, HistoricalPriceInterval) else interval
-        )
+        interval_value = interval.value if isinstance(interval, IntervalPrice) else interval
 
         params = {
             "stock": symbol,

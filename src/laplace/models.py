@@ -207,7 +207,7 @@ class IndustryDetail(BaseModel):
     image_url: str = Field(alias="imageUrl")
     avatar_url: str = Field(alias="avatarUrl")
     num_stocks: int = Field(alias="numStocks")
-    asset_class: str = Field(alias="assetClass")
+    stocks: List[CollectionStock]
 
     model_config = {"populate_by_name": True}
 
@@ -234,7 +234,6 @@ class SectorDetail(BaseModel):
     image_url: str = Field(alias="imageUrl")
     avatar_url: str = Field(alias="avatarUrl")
     num_stocks: int = Field(alias="numStocks")
-    asset_class: str = Field(alias="assetClass")
 
     model_config = {"populate_by_name": True}
 
