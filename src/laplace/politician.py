@@ -20,7 +20,7 @@ class PoliticianClient:
 
         response = self._client.get("v1/politician")
         return [Politician(**politician) for politician in response]
-    
+
     def get_politician_holdings_by_symbol(self, symbol: str) -> List[Holding]:
         """Get all holdings for a specific politician.
 
@@ -43,7 +43,7 @@ class PoliticianClient:
 
         response = self._client.get("v1/top-holding")
         return [TopHolding(**top_holding) for top_holding in response]
-    
+
     def get_politician_detail(self, id: int) -> PoliticianDetail:
         """Get detailed information for a specific politician.
 
