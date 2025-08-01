@@ -1,5 +1,6 @@
 """Main Laplace client."""
 
+from laplace.politician import PoliticianClient
 from .base import BaseClient
 from .collections import CollectionsClient
 from .financials import FinancialsClient
@@ -26,3 +27,4 @@ class LaplaceClient(BaseClient):
         self.financials = FinancialsClient(self)
         self.funds = FundsClient(self)
         self.li = LaplaceIntelligenceClient(self)
+        self.politicians = PoliticianClient(self)
