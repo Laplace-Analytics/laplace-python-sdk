@@ -2,6 +2,7 @@
 
 import os
 from datetime import datetime
+from typing import List
 from unittest.mock import Mock, patch
 
 import pytest
@@ -233,12 +234,12 @@ class TestReadmeExamples:
         from laplace.models import Region, Locale
 
         # Test valid regions
-        valid_regions: list[Region] = ["tr", "us"]
+        valid_regions: List[Region] = ["tr", "us"]
         assert "tr" in valid_regions
         assert "us" in valid_regions
 
         # Test valid locales
-        valid_locales: list[Locale] = ["tr", "en"]
+        valid_locales: List[Locale] = ["tr", "en"]
         assert "tr" in valid_locales
         assert "en" in valid_locales
 
