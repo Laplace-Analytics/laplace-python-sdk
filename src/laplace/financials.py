@@ -8,7 +8,9 @@ from .models import (
     FinancialSheetPeriod,
     FinancialSheetType,
     HistoricalFinancialSheets,
+    Locale,
     RatioComparisonPeerType,
+    Region,
     StockHistoricalRatios,
     StockHistoricalRatiosDescription,
     StockPeerFinancialRatioComparison,
@@ -26,7 +28,7 @@ class FinancialsClient:
         self._client = base_client
 
     def get_financial_ratio_comparison(
-        self, symbol: str, region: str, peer_type: RatioComparisonPeerType
+        self, symbol: str, region: Region, peer_type: RatioComparisonPeerType
     ) -> List[StockPeerFinancialRatioComparison]:
         params = {
             "symbol": symbol,
@@ -37,7 +39,7 @@ class FinancialsClient:
         return [StockPeerFinancialRatioComparison(**item) for item in resp]
 
     def get_historical_ratios(
-        self, symbol: str, keys: List[str], region: str, locale: str
+        self, symbol: str, keys: List[str], region: Region, locale: Locale
     ) -> List[StockHistoricalRatios]:
         params = {
             "symbol": symbol,
@@ -49,7 +51,7 @@ class FinancialsClient:
         return [StockHistoricalRatios(**item) for item in resp]
 
     def get_historical_ratios_descriptions(
-        self, locale: str, region: str
+        self, locale: Locale, region: Region
     ) -> List[StockHistoricalRatiosDescription]:
         params = {
             "locale": locale,
@@ -66,7 +68,7 @@ class FinancialsClient:
         sheet_type: FinancialSheetType,
         period: FinancialSheetPeriod,
         currency: Currency,
-        region: str,
+        region: Region,
     ) -> HistoricalFinancialSheets:
         if (
             sheet_type == FinancialSheetType.BALANCE_SHEET

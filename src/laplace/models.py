@@ -5,6 +5,18 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from typing import Literal
+
+Region = Literal[
+    "tr",
+    "us",
+]
+
+Locale = Literal[
+    "tr",
+    "en",
+]
+
 
 class Stock(BaseModel):
     """Stock model from the stocks API."""
@@ -25,7 +37,7 @@ class StockDetail(BaseModel):
     id: str
     name: str
     active: bool
-    region: str
+    region: Region
     symbol: str
     sector_id: str = Field(alias="sectorId")
     asset_type: str = Field(alias="assetType")
@@ -195,7 +207,7 @@ class IndustryDetail(BaseModel):
     image_url: str = Field(alias="imageUrl")
     avatar_url: str = Field(alias="avatarUrl")
     num_stocks: int = Field(alias="numStocks")
-    asset_class: str = Field(alias="assetClass")
+    stocks: List[CollectionStock]
 
     model_config = {"populate_by_name": True}
 
@@ -222,7 +234,6 @@ class SectorDetail(BaseModel):
     image_url: str = Field(alias="imageUrl")
     avatar_url: str = Field(alias="avatarUrl")
     num_stocks: int = Field(alias="numStocks")
-    asset_class: str = Field(alias="assetClass")
 
     model_config = {"populate_by_name": True}
 
@@ -315,7 +326,7 @@ class StockHistoricalRatiosDescription(BaseModel):
     updated_at: str = Field(alias="updatedAt")
     name: str
     description: str
-    locale: str
+    locale: Locale
     is_realtime: bool = Field(alias="isRealtime")
 
 
@@ -347,3 +358,20 @@ class FinancialSheetDate(BaseModel):
     day: int
     month: int
     year: int
+
+
+class BISTStockLiveData(BaseModel):
+    """BIST (Turkish) stock live data model."""
+
+    symbol: str = Field(alias="s")
+    daily_percent_change: float = Field(alias="ch")
+    close_price: float = Field(alias="p")
+    date: int = Field(alias="d")
+
+
+class USStockLiveData(BaseModel):
+    """US stock live data model."""
+
+    symbol: str = Field(alias="s")
+    price: float = Field(alias="p")
+    date: int = Field(alias="d")
