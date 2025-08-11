@@ -3,7 +3,7 @@
 import asyncio
 import json
 import uuid
-from typing import AsyncGenerator, Optional, Union
+from typing import AsyncGenerator, Optional, Union, List
 import httpx
 from laplace.models import Region, BISTStockLiveData, USStockLiveData
 
@@ -31,9 +31,9 @@ class LivePriceStream:
         self._task: Optional[asyncio.Task] = None
         self._queue: Optional[asyncio.Queue] = None
         self._is_closed = False
-        self._symbols: list[str] = []
+        self._symbols: List[str] = []
 
-    async def subscribe(self, symbols: list[str]) -> None:
+    async def subscribe(self, symbols: List[str]) -> None:
         """Subscribe to live price updates for given symbols."""
         await self._cleanup_existing_stream()
 
@@ -152,7 +152,7 @@ class LivePriceClient:
     def __init__(self, base_client):
         self.base_client = base_client
 
-    async def get_live_price_for_bist(self, symbols: list[str]) -> LivePriceStream:
+    async def get_live_price_for_bist(self, symbols: List[str]) -> LivePriceStream:
         """Start streaming BIST stock prices.
 
         Args:
@@ -165,7 +165,7 @@ class LivePriceClient:
         await stream.subscribe(symbols)
         return stream
 
-    async def get_live_price_for_us(self, symbols: list[str]) -> LivePriceStream:
+    async def get_live_price_for_us(self, symbols: List[str]) -> LivePriceStream:
         """Start streaming US stock prices.
 
         Args:
