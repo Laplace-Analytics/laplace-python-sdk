@@ -375,3 +375,53 @@ class USStockLiveData(BaseModel):
     symbol: str = Field(alias="s")
     price: float = Field(alias="p")
     date: int = Field(alias="d")
+
+class Politician(BaseModel):
+    """Politician information."""
+
+    id: int
+    politician_name: str = Field(alias="politicianName")
+    total_holdings: int = Field(alias="totalHoldings")
+    last_updated: str = Field(alias="lastUpdated")
+
+class Holding(BaseModel):
+    """Holding information for a specific politician."""
+
+    politician_name: str = Field(alias="politicianName")
+    symbol: str
+    company: str
+    holding: str
+    allocation: str
+    last_updated: str = Field(alias="lastUpdated")
+
+class HoldingShort(BaseModel):
+    """Short holding information for a specific politician."""
+
+    symbol: str
+    company: str
+    holding: str
+    allocation: str
+
+class TopHoldingPolitician(BaseModel):
+    """Top holding politician information."""
+
+    name: str
+    holding: str
+    allocation: str
+
+class TopHolding(BaseModel):
+    """Top holding information."""
+
+    symbol: str
+    company: str
+    politicians: List[TopHoldingPolitician]
+    count: int
+
+class PoliticianDetail(BaseModel):
+    """Complete information for a specific politician."""
+
+    id: int
+    name: str
+    holdings: List[HoldingShort]
+    total_holdings: int = Field(alias="totalHoldings")
+    last_updated: str = Field(alias="lastUpdated")

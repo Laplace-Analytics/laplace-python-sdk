@@ -14,6 +14,7 @@ This directory contains comprehensive tests for the Laplace Python SDK.
 
 - **test_stocks_integration.py**: Tests for stocks client with real API responses
 - **test_collections_integration.py**: Tests for collections client with real API responses
+- **test_politician_integration.py**: Tests for politician client with real API responses
 - Use mocked responses based on real API calls
 - Test both mocked and real API scenarios
 
@@ -127,6 +128,7 @@ tests/
 ├── test_base_client.py              # Base client unit tests
 ├── test_stocks_integration.py       # Stocks client integration tests
 ├── test_collections_integration.py  # Collections client integration tests
+├── test_politician_integration.py   # Politician client integration tests
 ├── test_live_price_integration.py # Market data client integration tests
 └── README.md                       # This file
 ```
@@ -136,6 +138,7 @@ tests/
 - ✅ **Base Client**: Authentication, error handling, request methods
 - ✅ **Stocks Client**: All endpoints with real API responses
 - ✅ **Collections Client**: All endpoints with real API responses
+- ✅ **Politician Client**: All endpoints with real API responses
 - ✅ **Live Price Client**: All endpoints with real API responses
 - ✅ **Field Mapping**: Pydantic model validation and aliases
 - ✅ **Error Handling**: Invalid regions, HTTP errors, network errors

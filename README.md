@@ -51,6 +51,16 @@ collection_detail = client.collections.get_collection_detail(
 print(f"Stocks in {collection_detail.title}:")
 for stock in collection_detail.stocks:
     print(f"  {stock.symbol}: {stock.name}")
+
+# Get politicians and their holdings
+politicians = client.politicians.get_politicians()
+for politician in politicians:
+    print(f"{politician.politician_name}: {politician.total_holdings} holdings")
+
+# Get holdings for a specific stock
+holdings = client.politicians.get_politician_holdings_by_symbol("AAPL")
+for holding in holdings:
+    print(f"{holding.politician_name}: {holding.holding} ({holding.allocation})")
 ```
 
 ## API Reference
@@ -115,6 +125,22 @@ sectors = client.collections.get_sectors(region="tr", locale="en")
 
 # Get sector detail
 sector_detail = client.collections.get_sector_detail(sector_id="id", region="tr")
+```
+
+### Politicians Client
+
+```python
+# Get all politicians
+politicians = client.politicians.get_politicians()
+
+# Get politician detail
+politician = client.politicians.get_politician_detail(id=1)
+
+# Get holdings by stock symbol
+holdings = client.politicians.get_politician_holdings_by_symbol(symbol="AAPL")
+
+# Get top holdings
+top_holdings = client.politicians.get_top_holdings()
 ```
 
 ## Supported Regions
