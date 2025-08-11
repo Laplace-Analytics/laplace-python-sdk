@@ -6,6 +6,7 @@ from .collections import CollectionsClient
 from .financials import FinancialsClient
 from .funds import FundsClient
 from .li import LaplaceIntelligenceClient
+from .live_price import LivePriceClient
 from .stocks import StocksClient
 
 
@@ -17,7 +18,7 @@ class LaplaceClient(BaseClient):
 
         Args:
             api_key: Your Laplace API key
-            base_url: Base URL for the API (default: https://laplace.finfree.co/api)
+            base_url: Base URL for the API (default: https://api.finfree.app/api)
         """
         super().__init__(api_key, base_url)
 
@@ -27,4 +28,5 @@ class LaplaceClient(BaseClient):
         self.financials = FinancialsClient(self)
         self.funds = FundsClient(self)
         self.li = LaplaceIntelligenceClient(self)
+        self.live_price = LivePriceClient(self)
         self.politicians = PoliticianClient(self)
