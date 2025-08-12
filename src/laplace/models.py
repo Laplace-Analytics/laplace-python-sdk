@@ -6,6 +6,9 @@ from typing import Dict, List, Optional, Generic, TypeVar
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Literal
+from typing import Generic
+
+T = TypeVar("T")
 
 
 class CapitalIncreaseType(str, Enum):
@@ -428,6 +431,23 @@ class FinancialSheetDate(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class MessageType(str, Enum):
+    """Message type."""
+
+    PRICE = "pr"
+    STATE_CHANGE = "state_change"
+    HEARTBEAT = "heartbeat"
+    ORDERBOOK = "ob"
+
+
+class LiveMessageV2(BaseModel, Generic[T]):
+    """Live price message model."""
+
+    data: T
+    symbol: str
+    type: MessageType
+
+
 class BISTStockLiveData(BaseModel):
     """BIST (Turkish) stock live data model."""
 
@@ -447,6 +467,37 @@ class USStockLiveData(BaseModel):
     date: int = Field(alias="d")
 
     model_config = {"populate_by_name": True}
+
+
+class LevelSide(str, Enum):
+    """Level side."""
+
+    BID = "bid"
+    ASK = "ask"
+
+
+class OrderbookLevel(BaseModel):
+    """Orderbook level."""
+
+    id: int = Field(alias="level")
+    side: LevelSide = Field(alias="side")
+    price: float = Field(alias="price")
+    size: float = Field(alias="size")
+
+
+class OrderbookDeletedLevel(BaseModel):
+    """Orderbook deleted level."""
+
+    id: int = Field(alias="level")
+    side: LevelSide = Field(alias="side")
+
+
+class BISTStockOrderBookData(BaseModel):
+    """BIST stock order book data."""
+
+    updated: List[OrderbookLevel] = Field(alias="updated")
+    deleted: List[OrderbookDeletedLevel] = Field(alias="deleted")
+    symbol: str = Field(alias="s")
 
 
 class Politician(BaseModel):
@@ -863,9 +914,6 @@ class MarketState(BaseModel):
     stock_symbol: Optional[str] = Field(alias="stockSymbol", default=None)
 
     model_config = {"populate_by_name": True}
-
-
-T = TypeVar("T")
 
 
 class PaginatedResponse(BaseModel, Generic[T]):
