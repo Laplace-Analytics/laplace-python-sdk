@@ -61,5 +61,5 @@ class EarningsClient:
 
         params = {"symbol": symbol, "year": year, "quarter": quarter}
 
-        response = self._client.get("v1/earnings/transcript/summary", params=params)
+        response = self._client.get("v1/earnings/transcript", params=params)
         return EarningsTranscriptWithSummary(**response)
