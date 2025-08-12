@@ -94,17 +94,15 @@ class LivePriceStream(Generic[T]):
         stream_id = str(uuid.uuid4())
         symbols_param = ",".join(self._symbols) if self._symbols else ""
 
-        version = "v1"
-        type = ""
+        url = self.base_client.base_url
         if self.type == LivePriceType.PRICE and self.region == Region.TR:
-            version = "v2"
-            type = "price"
+            url = f"{url}/v2/stock/price/live"
         elif self.type == LivePriceType.DELAYED_PRICE:
-            type = "delayed"
+            url = f"{url}/v1/stock/price/delayed"
         elif self.type == LivePriceType.ORDER_BOOK:
-            type = "orderbook"
+            url = f"{url}/v1/stock/orderbook/live"
 
-        return f"{self.base_client.base_url}/{version}/stock/{type}/live?filter={symbols_param}&region={self.region.value}&stream={stream_id}"
+        return f"{url}?filter={symbols_param}&region={self.region.value}&stream={stream_id}"
 
     def _create_model_from_data(self, data: dict) -> T:
         """Create appropriate data model based on region."""
