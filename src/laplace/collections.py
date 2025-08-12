@@ -126,7 +126,7 @@ class CollectionsClient:
         response = self._client.get(f"v1/industry/{industry_id}", params=params)
         return IndustryDetail(**response)
 
-    def get_custom_themes(self, locale: Locale, region: Region) -> List[dict]:
+    def get_custom_themes(self, locale: Locale, region: Region) -> List[CollectionDetail]:
         """Get a list of all your custom themes.
 
         Args:
@@ -134,16 +134,16 @@ class CollectionsClient:
             region: Region code (tr, us)
 
         Returns:
-            List[dict]: List of custom themes
+            List[CollectionDetail]: List of custom themes
         """
         params = {"locale": locale, "region": region.value}
 
         response = self._client.get("v1/custom-theme", params=params)
-        return response
+        return [CollectionDetail(**theme) for theme in response]
 
     def get_custom_theme_detail(
         self, theme_id: str, locale: Locale, region: Region, sort_by: Optional[str] = None
-    ) -> dict:
+    ) -> CollectionDetail:
         """Retrieve detailed information about a specific custom theme.
 
         Args:
@@ -153,7 +153,7 @@ class CollectionsClient:
             sort_by: Sort the stocks by a specific field (e.g., "price_change") (optional)
 
         Returns:
-            dict: Detailed custom theme information
+            CollectionDetail: Detailed custom theme information
         """
         params = {"locale": locale, "region": region.value}
 
@@ -161,7 +161,7 @@ class CollectionsClient:
             params["sortBy"] = sort_by
 
         response = self._client.get(f"v1/custom-theme/{theme_id}", params=params)
-        return response
+        return CollectionDetail(**response)
 
     def get_sectors(self, region: Region, locale: Locale = "en") -> List[Sector]:
         """Retrieve a list of sectors along with the number of stocks in each.

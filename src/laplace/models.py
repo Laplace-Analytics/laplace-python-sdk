@@ -1,7 +1,7 @@
 """Pydantic models for Laplace API responses."""
 
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Generic, TypeVar
 
 from pydantic import BaseModel, Field
 from datetime import datetime
@@ -637,6 +637,21 @@ class FundCategory(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class Fund(BaseModel):
+    """Fund model."""
+
+    name: str
+    active: bool
+    symbol: str
+    fund_type: str = Field(alias="fundType")
+    asset_type: AssetType = Field(alias="assetType")
+    risk_level: int = Field(alias="riskLevel")
+    owner_symbol: str = Field(alias="ownerSymbol")
+    management_fee: float = Field(alias="managementFee")
+
+    model_config = {"populate_by_name": True}
+
+
 class FundDistribution(BaseModel):
     """Fund distribution model."""
 
@@ -786,15 +801,6 @@ class CapitalIncrease(BaseModel):
     model_config = {"populate_by_name": True}
 
 
-class CapitalIncreaseData(BaseModel):
-    """Capital increase data model."""
-
-    items: List[CapitalIncrease]
-    record_count: int = Field(alias="recordCount")
-
-    model_config = {"populate_by_name": True}
-
-
 class SearchResultStock(BaseModel):
     """Search result stock model."""
 
@@ -817,6 +823,56 @@ class SearchResultCollection(BaseModel):
     asset_class: AssetClass = Field(alias="assetClass")
     image_url: str = Field(alias="imageUrl")
     avatar_url: str = Field(alias="avatarUrl")
+
+    model_config = {"populate_by_name": True}
+
+
+class EarningsTranscriptListItem(BaseModel):
+    """Earnings transcript list item model."""
+
+    symbol: str
+    year: int
+    quarter: int
+    date: str
+    fiscal_year: int = Field(alias="fiscal_year")
+
+    model_config = {"populate_by_name": True}
+
+
+class EarningsTranscriptWithSummary(BaseModel):
+    """Earnings transcript with summary model."""
+
+    symbol: str
+    year: int
+    quarter: int
+    date: str
+    content: str
+    summary: Optional[str] = None
+    has_summary: bool = Field(alias="has_summary")
+
+    model_config = {"populate_by_name": True}
+
+
+class MarketState(BaseModel):
+    """Market state model."""
+
+    id: int
+    market_symbol: Optional[str] = Field(alias="marketSymbol", default=None)
+    state: str
+    last_timestamp: datetime = Field(alias="lastTimestamp")
+    stock_symbol: Optional[str] = Field(alias="stockSymbol", default=None)
+
+    model_config = {"populate_by_name": True}
+
+
+T = TypeVar("T")
+
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    """Generic paginated response model."""
+
+    record_count: int = Field(alias="recordCount")
+    items: List[T]
 
     model_config = {"populate_by_name": True}
 

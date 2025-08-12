@@ -4,7 +4,8 @@ from laplace.base import BaseClient
 
 from .models import (
     Region,
-    CapitalIncreaseData,
+    CapitalIncrease,
+    PaginatedResponse,
     PaginationPageSize,
 )
 
@@ -25,7 +26,7 @@ class CapitalIncreaseClient:
         region: Region = Region.TR,
         page: int = 0,
         size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
-    ) -> CapitalIncreaseData:
+    ) -> PaginatedResponse[CapitalIncrease]:
         """Retrieve all capital increases.
 
         Args:
@@ -34,7 +35,7 @@ class CapitalIncreaseClient:
             size: Page size (default: 10)
 
         Returns:
-            CapitalIncreaseData: Capital increase data
+            PaginatedResponse[CapitalIncrease]: Capital increase data
         """
         if region != Region.TR:
             raise ValueError("Capital increase endpoint only works with the 'tr' region")
@@ -42,43 +43,45 @@ class CapitalIncreaseClient:
         params = {"region": region.value, "page": page, "size": size.value}
 
         response = self._client.get("v1/capital-increase/all", params=params)
-        return CapitalIncreaseData(**response)
+        return PaginatedResponse[CapitalIncrease](**response)
 
-    def get_by_id(
+    def get_by_symbol(
         self,
-        capital_increase_id: str,
+        symbol: str,
         region: Region = Region.TR,
         page: int = 0,
         size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
-    ) -> CapitalIncreaseData:
+    ) -> PaginatedResponse[CapitalIncrease]:
         """Retrieve capital increase information by ID.
 
         Args:
-            capital_increase_id: Capital increase ID
+            symbol: Stock symbol (e.g., "AKBNK")
             region: Region code (only 'tr' is supported) (default: tr)
             page: Page number (default: 0)
             size: Page size (default: 10)
 
         Returns:
-            CapitalIncreaseData: Capital increase information
+            PaginatedResponse[CapitalIncrease]: Capital increase information
         """
         if region != Region.TR:
             raise ValueError("Capital increase endpoint only works with the 'tr' region")
 
         params = {"region": region.value, "page": page, "size": size.value}
 
-        response = self._client.get(f"v1/capital-increase/{capital_increase_id}", params=params)
-        return CapitalIncreaseData(**response)
+        response = self._client.get(f"v1/capital-increase/{symbol}", params=params)
+        return PaginatedResponse[CapitalIncrease](**response)
 
-    def get_active_rights(self, symbol: str, region: Region = Region.TR) -> CapitalIncreaseData:
+    def get_active_rights(
+        self, symbol: str, region: Region = Region.TR
+    ) -> PaginatedResponse[CapitalIncrease]:
         """Retrieve active rights for a specific stock.
 
         Args:
-            symbol: Stock symbol (e.g., "AAPL")
+            symbol: Stock symbol (e.g., "AKBNK")
             region: Region code (only 'tr' is supported) (default: tr)
 
         Returns:
-            CapitalIncreaseData: Active rights data
+            PaginatedResponse[CapitalIncrease]: Active rights data
         """
         if region != Region.TR:
             raise ValueError("Rights endpoint only works with the 'tr' region")
@@ -86,4 +89,4 @@ class CapitalIncreaseClient:
         params = {"region": region.value}
 
         response = self._client.get(f"v1/rights/active/{symbol}", params=params)
-        return CapitalIncreaseData(**response)
+        return PaginatedResponse[CapitalIncrease](**response)

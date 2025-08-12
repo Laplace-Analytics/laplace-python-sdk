@@ -4,7 +4,12 @@ from typing import List
 
 from laplace.base import BaseClient
 
-from .models import Region
+from .models import (
+    Region,
+    MarketState,
+    PaginatedResponse,
+    PaginationPageSize,
+)
 
 
 class StateClient(BaseClient):
@@ -18,72 +23,86 @@ class StateClient(BaseClient):
         """
         self._client = base_client
 
-    def get_all(self, region: Region = Region.TR) -> List[dict]:
-        """Retrieve all states.
+    def get_all_market_states(
+        self,
+        region: Region = Region.TR,
+        page: int = 0,
+        page_size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
+    ) -> PaginatedResponse[MarketState]:
+        """Retrieve all market states.
 
         Args:
             region: Region code (only 'tr' is supported) (default: tr)
+            page: Page number (default: 0)
+            page_size: Page size (default: 10)
 
         Returns:
-            List[dict]: List of states
+            PaginatedResponse: Paginated response with market states
         """
         if region != Region.TR:
             raise ValueError("State endpoint only works with the 'tr' region")
 
-        params = {"region": region.value}
+        params = {"region": region.value, "page": page, "size": page_size.value}
 
         response = self._client.get("v1/state/all", params=params)
-        return response
+        return PaginatedResponse[MarketState](**response)
 
-    def get_by_id(self, state_id: str, region: Region = Region.TR) -> dict:
-        """Retrieve state information by ID.
+    def get_market_state(self, symbol: str, region: Region = Region.TR) -> MarketState:
+        """Retrieve market state information by symbol.
 
         Args:
-            state_id: State ID
+            symbol: Market symbol
             region: Region code (only 'tr' is supported) (default: tr)
 
         Returns:
-            dict: State information
+            MarketState: Market state information
         """
         if region != Region.TR:
             raise ValueError("State endpoint only works with the 'tr' region")
 
         params = {"region": region.value}
 
-        response = self._client.get(f"v1/state/{state_id}", params=params)
-        return response
+        response = self._client.get(f"v1/state/{symbol}", params=params)
+        return MarketState(**response)
 
-    def get_stock_data(self, state_id: str, region: Region = Region.TR) -> List[dict]:
-        """Retrieve stock data for a specific state.
+    def get_all_stock_states(
+        self,
+        region: Region = Region.TR,
+        page: int = 0,
+        page_size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
+    ) -> PaginatedResponse[MarketState]:
+        """Retrieve all stock states.
 
         Args:
-            state_id: State ID
+            region: Region code (only 'tr' is supported) (default: tr)
+            page: Page number (default: 0)
+            page_size: Page size (default: 10)
+
+        Returns:
+            PaginatedResponse: Paginated response with stock states
+        """
+        if region != Region.TR:
+            raise ValueError("State stock all endpoint only works with the 'tr' region")
+
+        params = {"region": region.value, "page": page, "size": page_size.value}
+
+        response = self._client.get("v1/state/stock/all", params=params)
+        return PaginatedResponse[MarketState](**response)
+
+    def get_stock_state(self, symbol: str, region: Region = Region.TR) -> MarketState:
+        """Retrieve stock state information by symbol.
+
+        Args:
+            symbol: Stock symbol
             region: Region code (only 'tr' is supported) (default: tr)
 
         Returns:
-            List[dict]: Stock data for the state
+            MarketState: Stock state information
         """
         if region != Region.TR:
             raise ValueError("State stock endpoint only works with the 'tr' region")
 
         params = {"region": region.value}
 
-        response = self._client.get(f"v1/state/stock/{state_id}", params=params)
-        return response
-
-    def get_all_stock_data(self, region: Region = Region.TR) -> List[dict]:
-        """Retrieve all stock data for all states.
-
-        Args:
-            region: Region code (only 'tr' is supported) (default: tr)
-
-        Returns:
-            List[dict]: All stock data for all states
-        """
-        if region != Region.TR:
-            raise ValueError("State stock all endpoint only works with the 'tr' region")
-
-        params = {"region": region.value}
-
-        response = self._client.get("v1/state/stock/all", params=params)
-        return response
+        response = self._client.get(f"v1/state/stock/{symbol}", params=params)
+        return MarketState(**response)

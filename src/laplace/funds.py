@@ -5,10 +5,12 @@ from typing import List
 from laplace.base import BaseClient
 
 from .models import (
+    Fund,
     FundStats,
     FundPriceData,
     FundDistribution,
     Region,
+    PaginationPageSize,
 )
 
 
@@ -22,6 +24,27 @@ class FundsClient(BaseClient):
             base_client: The base Laplace client instance
         """
         self._client = base_client
+
+    def get_all(
+        self,
+        region: Region = Region.TR,
+        page: int = 0,
+        page_size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
+    ) -> List[Fund]:
+        """Retrieve all funds.
+
+        Args:
+            region: Region code (default: tr)
+            page: Page number (default: 0)
+            page_size: Page size (default: 10)
+
+        Returns:
+            List[Fund]: List of funds
+        """
+        params = {"region": region.value, "page": page, "pageSize": page_size.value}
+
+        response = self._client.get("v1/fund", params=params)
+        return [Fund(**data) for data in response]
 
     def get_stats(self, symbol: str, region: Region = Region.TR) -> FundStats:
         """Retrieve stats for a TEFAS fund.
