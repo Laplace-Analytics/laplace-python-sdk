@@ -4,6 +4,8 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
 
+from laplace.base import BaseClient
+
 from .models import (
     Locale,
     PriceCandle,
@@ -13,6 +15,13 @@ from .models import (
     StockPriceData,
     StockRestriction,
     StockRules,
+    TopMover,
+    Dividend,
+    StockStats,
+    AggregateGraphData,
+    KeyInsight,
+    PaginationPageSize,
+    AssetClass,
 )
 
 
@@ -46,7 +55,7 @@ class HistoricalPriceInterval(Enum):
 class StocksClient:
     """Client for stock-related API endpoints."""
 
-    def __init__(self, base_client):
+    def __init__(self, base_client: BaseClient):
         """Initialize the stocks client.
 
         Args:
@@ -58,7 +67,12 @@ class StocksClient:
         """Format datetime to API required format: YYYY-MM-DD HH:MM:SS"""
         return dt.strftime("%Y-%m-%d %H:%M:%S")
 
-    def get_all(self, region: Region, page: int = 1, page_size: int = 10) -> List[Stock]:
+    def get_all(
+        self,
+        region: Region,
+        page: int = 1,
+        page_size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
+    ) -> List[Stock]:
         """Retrieve a list of all stocks available in the specified region.
 
         Args:
@@ -69,7 +83,7 @@ class StocksClient:
         Returns:
             List[Stock]: List of stocks
         """
-        params = {"page": page, "pageSize": page_size, "region": region}
+        params = {"page": page, "pageSize": page_size.value, "region": region.value}
 
         response = self._client.get("v2/stock/all", params=params)
         return [Stock(**stock) for stock in response]
@@ -89,7 +103,11 @@ class StocksClient:
         return StockDetail(**response)
 
     def get_detail_by_symbol(
-        self, symbol: str, region: Region, asset_class: str = "equity", locale: Locale = "en"
+        self,
+        symbol: str,
+        region: Region,
+        asset_class: AssetClass = AssetClass.EQUITY,
+        locale: Locale = "en",
     ) -> StockDetail:
         """Retrieve detailed information about a specific stock using its symbol.
 
@@ -102,7 +120,12 @@ class StocksClient:
         Returns:
             StockDetail: Detailed stock information
         """
-        params = {"locale": locale, "symbol": symbol, "region": region, "asset_class": asset_class}
+        params = {
+            "locale": locale,
+            "symbol": symbol,
+            "region": region.value,
+            "asset_class": asset_class.value,
+        }
 
         response = self._client.get("v1/stock/detail", params=params)
         return StockDetail(**response)
@@ -121,7 +144,7 @@ class StocksClient:
         Returns:
             List[StockPriceData]: List of stock price data
         """
-        params = {"region": region, "symbols": ",".join(symbols)}
+        params = {"region": region.value, "symbols": ",".join(symbols)}
 
         if keys:
             params["keys"] = ",".join(keys)
@@ -153,7 +176,7 @@ class StocksClient:
 
         params = {
             "stock": symbol,
-            "region": region,
+            "region": region.value,
             "fromDate": self._format_datetime(from_date),
             "toDate": self._format_datetime(to_date),
             "interval": interval_value,
@@ -162,7 +185,7 @@ class StocksClient:
         response = self._client.get("v1/stock/price/interval", params=params)
         return [PriceCandle(**candle) for candle in response]
 
-    def get_tick_rules(self, region: Region = "tr") -> StockRules:
+    def get_tick_rules(self, region: Region = Region.TR) -> StockRules:
         """Retrieve the tick rules for creating orderbook and price limits.
 
         Note: This endpoint only works with the "tr" region.
@@ -173,14 +196,14 @@ class StocksClient:
         Returns:
             StockRules: Tick rules and price limits
         """
-        if region != "tr":
+        if region != Region.TR:
             raise ValueError("Tick rules endpoint only works with the 'tr' region")
 
-        params = {"region": region}
+        params = {"region": region.value}
         response = self._client.get("v1/stock/rules", params=params)
         return StockRules(**response)
 
-    def get_restrictions(self, region: Region = "tr") -> List[StockRestriction]:
+    def get_restrictions(self, region: Region = Region.TR) -> List[StockRestriction]:
         """Retrieve the restrictions for a stock.
 
         Note: This endpoint only works with the "tr" region.
@@ -191,14 +214,14 @@ class StocksClient:
         Returns:
             List[StockRestriction]: List of stock restrictions
         """
-        if region != "tr":
+        if region != Region.TR:
             raise ValueError("Restrictions endpoint only works with the 'tr' region")
 
-        params = {"region": region}
+        params = {"region": region.value}
         response = self._client.get("v1/stock/restrictions", params=params)
         return [StockRestriction(**restriction) for restriction in response]
 
-    def get_all_restrictions(self, region: Region = "tr") -> List[StockRestriction]:
+    def get_all_restrictions(self, region: Region = Region.TR) -> List[StockRestriction]:
         """Retrieve the active restrictions for all stocks.
 
         Note: This endpoint only works with the "tr" region.
@@ -209,9 +232,114 @@ class StocksClient:
         Returns:
             List[StockRestriction]: List of all stock restrictions
         """
-        if region != "tr":
+        if region != Region.TR:
             raise ValueError("All restrictions endpoint only works with the 'tr' region")
 
-        params = {"region": region}
+        params = {"region": region.value}
         response = self._client.get("v1/stock/restrictions/all", params=params)
         return [StockRestriction(**restriction) for restriction in response]
+
+    def get_top_movers(
+        self,
+        region: Region,
+        direction: str = "gainers",
+        page: int = 0,
+        page_size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
+    ) -> List[TopMover]:
+        """Retrieve top movers for a specific region.
+
+        Args:
+            region: Region code (tr, us)
+            direction: Direction of movers (gainers, losers) (default: gainers)
+            page: Page number (default: 0)
+            page_size: Page size (default: 10)
+
+        Returns:
+            List[TopMover]: List of top movers
+        """
+        params = {
+            "region": region.value,
+            "direction": direction,
+            "page": page,
+            "pageSize": page_size.value,
+        }
+
+        response = self._client.get("v2/stock/top-movers", params=params)
+        return [TopMover(**mover) for mover in response]
+
+    def get_dividends(self, symbol: str, region: Region) -> List[Dividend]:
+        """Retrieve dividends for a specific stock.
+
+        Args:
+            symbol: Stock symbol (e.g., "AAPL")
+            region: Region code (tr, us)
+
+        Returns:
+            List[Dividend]: List of dividends
+        """
+        params = {"symbol": symbol, "region": region.value}
+
+        response = self._client.get("v2/stock/dividends", params=params)
+        return [Dividend(**dividend) for dividend in response]
+
+    def get_stats(self, symbols: List[str], region: Region) -> List[StockStats]:
+        """Retrieve stats for specific stocks.
+
+        Args:
+            symbols: List of stock symbols (e.g., ["AAPL", "MSFT"])
+            region: Region code (tr, us)
+
+        Returns:
+            List[StockStats]: List of stock stats
+        """
+        params = {"symbols": ",".join(symbols), "region": region.value}
+
+        response = self._client.get("v2/stock/stats", params=params)
+        return [StockStats(**stats) for stats in response]
+
+    def get_aggregate_graph(
+        self,
+        region: Region,
+        period: str,
+        sector_id: Optional[str] = None,
+        industry_id: Optional[str] = None,
+        collection_id: Optional[str] = None,
+    ) -> AggregateGraphData:
+        """Retrieve aggregate graph data.
+
+        Args:
+            region: Region code (tr, us)
+            period: Period to aggregate over (1G, 1H, 1A, 3A, 1Y, 2Y, 3Y, 5Y)
+            sector_id: Sector ID (optional)
+            industry_id: Industry ID (optional)
+            collection_id: Collection ID (optional)
+
+        Returns:
+            AggregateGraphData: Aggregate graph data
+        """
+        params = {"region": region.value, "period": period}
+
+        if sector_id:
+            params["sectorId"] = sector_id
+        if industry_id:
+            params["industryId"] = industry_id
+        if collection_id:
+            params["collectionId"] = collection_id
+
+        response = self._client.get("v1/aggregate/graph", params=params)
+        return AggregateGraphData(**response)
+
+    def get_key_insight(self, symbol: str, region: Region) -> KeyInsight:
+        """Retrieve key insights for a specific stock.
+
+        Args:
+            symbol: Stock symbol (e.g., "AAPL")
+            region: Region code (tr, us)
+
+        Returns:
+            KeyInsight: Key insights data
+        """
+        params = {"symbol": symbol, "region": region.value}
+
+        response = self._client.get("v1/key-insight", params=params)
+        return KeyInsight(**response)

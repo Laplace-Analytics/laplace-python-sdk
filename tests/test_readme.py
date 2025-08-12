@@ -3,13 +3,13 @@
 import os
 from datetime import datetime
 from typing import List
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
 from laplace import LaplaceClient
 from laplace.base import LaplaceAPIError
-from laplace.stocks import HistoricalPriceInterval, IntervalPrice
+from laplace.stocks import IntervalPrice
 
 
 class TestReadmeExamples:

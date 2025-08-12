@@ -77,13 +77,13 @@ class LivePriceStream:
         """Build the streaming URL for the given symbols and region."""
         stream_id = str(uuid.uuid4())
         symbols_param = ",".join(self._symbols) if self._symbols else ""
-        return f"{self.base_client.base_url}/v1/stock/price/live?filter={symbols_param}&region={self.region}&stream={stream_id}"
+        return f"{self.base_client.base_url}/v1/stock/price/live?filter={symbols_param}&region={self.region.value}&stream={stream_id}"
 
     def _create_model_from_data(self, data: dict) -> LivePriceData:
         """Create appropriate data model based on region."""
-        if self.region == "tr":
+        if self.region == Region.TR:
             return BISTStockLiveData(**data)
-        elif self.region == "us":
+        elif self.region == Region.US:
             return USStockLiveData(**data)
         else:
             raise ValueError(f"Unsupported region: {self.region}")

@@ -1,12 +1,17 @@
 """Main Laplace client."""
 
-from laplace.politician import PoliticianClient
 from .base import BaseClient
+from .brokers import BrokersClient
+from .capital_increase import CapitalIncreaseClient
 from .collections import CollectionsClient
+from .earnings import EarningsClient
 from .financials import FinancialsClient
 from .funds import FundsClient
 from .li import LaplaceIntelligenceClient
 from .live_price import LivePriceClient
+from .politician import PoliticianClient
+from .search import SearchClient
+from .state import StateClient
 from .stocks import StocksClient
 
 
@@ -30,3 +35,8 @@ class LaplaceClient(BaseClient):
         self.li = LaplaceIntelligenceClient(self)
         self.live_price = LivePriceClient(self)
         self.politicians = PoliticianClient(self)
+        self.brokers = BrokersClient(self)
+        self.capital_increase = CapitalIncreaseClient(self)
+        self.earnings = EarningsClient(self)
+        self.search = SearchClient(self)
+        self.state = StateClient(self)
