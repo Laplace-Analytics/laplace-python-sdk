@@ -37,7 +37,7 @@ class EarningsClient:
 
         params = {"symbol": symbol, "region": region.value}
 
-        response = self._client.get("v1/earnings/transcript", params=params)
+        response = self._client.get("v1/earnings/transcripts", params=params)
         return [EarningsTranscriptListItem(**data) for data in response]
 
     def get_transcript_with_summary(
