@@ -2,6 +2,8 @@
 
 from typing import List
 
+from laplace.base import BaseClient
+
 from .models import (
     Currency,
     FinancialSheetDate,
@@ -20,7 +22,7 @@ from .models import (
 class FinancialsClient:
     """Client for financial data API endpoints."""
 
-    def __init__(self, base_client):
+    def __init__(self, base_client: BaseClient):
         """Initialize the financials client.
         Args:
             base_client: The base Laplace client instance
@@ -32,7 +34,7 @@ class FinancialsClient:
     ) -> List[StockPeerFinancialRatioComparison]:
         params = {
             "symbol": symbol,
-            "region": region,
+            "region": region.value,
             "peerType": peer_type.value,
         }
         resp = self._client.get("v2/stock/financial-ratio-comparison", params=params)
@@ -43,7 +45,7 @@ class FinancialsClient:
     ) -> List[StockHistoricalRatios]:
         params = {
             "symbol": symbol,
-            "region": region,
+            "region": region.value,
             "locale": locale,
             "slugs": ",".join(keys),
         }
@@ -55,7 +57,7 @@ class FinancialsClient:
     ) -> List[StockHistoricalRatiosDescription]:
         params = {
             "locale": locale,
-            "region": region,
+            "region": region.value,
         }
         resp = self._client.get("v2/stock/historical-ratios/descriptions", params=params)
         return [StockHistoricalRatiosDescription(**item) for item in resp]
@@ -83,7 +85,7 @@ class FinancialsClient:
             "sheetType": sheet_type.value,
             "periodType": period.value,
             "currency": currency.value,
-            "region": region,
+            "region": region.value,
         }
         resp = self._client.get("v3/stock/historical-financial-sheets", params=params)
         return HistoricalFinancialSheets(**resp)

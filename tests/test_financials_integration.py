@@ -11,6 +11,7 @@ from laplace.models import (
     HistoricalFinancialSheets,
     HistoricalRatiosFormat,
     RatioComparisonPeerType,
+    Region,
     StockHistoricalRatios,
     StockHistoricalRatiosDescription,
     StockPeerFinancialRatioComparison,
@@ -40,7 +41,7 @@ class TestFinancialsIntegration:
         with patch.object(client, "get", return_value=mock_response_data):
             result = client.financials.get_financial_ratio_comparison(
                 symbol="TUPRS",
-                region="tr",
+                region=Region.TR,
                 peer_type=RatioComparisonPeerType.INDUSTRY,
             )
         assert isinstance(result, list)
@@ -76,7 +77,7 @@ class TestFinancialsIntegration:
             result = client.financials.get_historical_ratios(
                 symbol="TUPRS",
                 keys=["pe"],
-                region="tr",
+                region=Region.TR,
                 locale="en",
             )
         assert isinstance(result, list)
@@ -115,7 +116,7 @@ class TestFinancialsIntegration:
         with patch.object(client, "get", return_value=mock_response_data):
             result = client.financials.get_historical_ratios_descriptions(
                 locale="en",
-                region="tr",
+                region=Region.TR,
             )
         assert isinstance(result, list)
         assert isinstance(result[0], StockHistoricalRatiosDescription)
@@ -155,7 +156,7 @@ class TestFinancialsIntegration:
                 sheet_type=FinancialSheetType.BALANCE_SHEET,
                 period=FinancialSheetPeriod.CUMULATIVE,
                 currency=Currency.TRY,
-                region="tr",
+                region=Region.TR,
             )
         assert isinstance(result, HistoricalFinancialSheets)
         assert isinstance(result.sheets, list)
