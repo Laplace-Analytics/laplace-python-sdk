@@ -81,6 +81,8 @@ class Stock(BaseModel):
     industry_id: str = Field(alias="industryId")
     updated_date: datetime = Field(alias="updatedDate")
 
+    model_config = {"populate_by_name": True}
+
 
 class StockDetail(BaseModel):
     """Detailed stock information from stock detail API."""
