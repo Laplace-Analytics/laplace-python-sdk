@@ -228,7 +228,7 @@ class LivePriceWebSocketClient(BaseClient):
                 try:
                     error_data = e.response.json()
                     self._log(f"HTTP Error Response: {error_data}", "error")
-                except:
+                except (ValueError, json.JSONDecodeError):
                     self._log(f"HTTP Error Response: {e.response.text}", "error")
                 raise
 

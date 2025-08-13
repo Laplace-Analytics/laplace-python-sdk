@@ -1,6 +1,5 @@
 """State client for Laplace API."""
 
-from typing import List
 
 from laplace.base import BaseClient
 

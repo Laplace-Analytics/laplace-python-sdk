@@ -6,7 +6,6 @@ from typing import Dict, List, Optional, Generic, TypeVar
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Literal
-from typing import Generic
 
 T = TypeVar("T")
 

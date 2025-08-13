@@ -8,7 +8,6 @@ from .models import (
     Broker,
     PaginationPageSize,
     Region,
-    BrokerTradingData,
     BrokerMarketData,
     BrokerStockData,
     BrokerSortDirection,
