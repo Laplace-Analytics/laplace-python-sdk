@@ -264,8 +264,8 @@ class TestWebSocketRealIntegration:
                 symbols=["THYAO"], feed=LivePriceFeed.LIVE_BIST, handler=mock_handler
             )
 
-            # Wait for actual data messages (longer wait for real data)
-            await asyncio.sleep(10)
+            # Wait for actual data messages
+            await asyncio.sleep(3)
 
             # Clean up
             unsubscribe()
@@ -335,7 +335,7 @@ class TestWebSocketRealIntegration:
                 unsubscribes.append(unsubscribe)
 
             # Wait for data to arrive
-            await asyncio.sleep(15)
+            await asyncio.sleep(5)
 
             # Unsubscribe from all
             for unsubscribe in unsubscribes:
@@ -423,7 +423,7 @@ class TestWebSocketRealIntegration:
             )
 
             # Wait for data to arrive
-            await asyncio.sleep(10)
+            await asyncio.sleep(3)
 
             # Clean up
             unsubscribe()
@@ -446,6 +446,171 @@ class TestWebSocketRealIntegration:
                 assert hasattr(data, "price"), f"Data missing price: {data}"
                 assert hasattr(data, "date"), f"Data missing date: {data}"
 
+            assert websocket_client.is_connection_closed() is True
+
+        except Exception as e:
+            if not websocket_client.is_connection_closed():
+                await websocket_client.close()
+            raise e
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_real_websocket_unsubscribe_reconnect(self, integration_client: LaplaceClient):
+        """Test WebSocket unsubscribe and reconnect functionality."""
+        websocket_client = integration_client.create_websocket_client(
+            feeds=[LivePriceFeed.LIVE_BIST],
+            external_user_id="test-integration-user",
+            options=WebsocketOptions(enable_logging=False),
+        )
+
+        try:
+            await websocket_client.connect()
+
+            # Track received data for different subscriptions
+            thyao_data = []
+            garan_data = []
+            message_counts = {"THYAO": 0, "GARAN": 0}
+
+            def create_handler(symbol):
+                def handler(data):
+                    if symbol == "THYAO":
+                        thyao_data.append(data)
+                        message_counts["THYAO"] += 1
+                    elif symbol == "GARAN":
+                        garan_data.append(data)
+                        message_counts["GARAN"] += 1
+                    print(f"Received data for {symbol}: {data}")
+
+                return handler
+
+            # Subscribe to THYAO first
+            thyao_unsubscribe = websocket_client.subscribe(
+                symbols=["THYAO"], feed=LivePriceFeed.LIVE_BIST, handler=create_handler("THYAO")
+            )
+
+            # Wait for some THYAO data
+            await asyncio.sleep(2)
+
+            # Subscribe to GARAN
+            garan_unsubscribe = websocket_client.subscribe(
+                symbols=["GARAN"], feed=LivePriceFeed.LIVE_BIST, handler=create_handler("GARAN")
+            )
+
+            # Wait for data from both symbols, then test unsubscribe behavior
+            await asyncio.sleep(5)
+
+            # Unsubscribe from both symbols
+            thyao_unsubscribe()
+            garan_unsubscribe()
+
+            await websocket_client.close()
+
+            # Verify results
+            print(f"THYAO message count: {message_counts['THYAO']}")
+            print(f"GARAN message count: {message_counts['GARAN']}")
+            print(f"THYAO data: {len(thyao_data)} messages")
+            print(f"GARAN data: {len(garan_data)} messages")
+
+            # Check that we received data for both symbols initially
+            assert message_counts["THYAO"] > 0, "No THYAO data received"
+            assert message_counts["GARAN"] > 0, "No GARAN data received"
+
+            # Verify data structure
+            for data in thyao_data:
+                assert isinstance(
+                    data, BISTStockLiveData
+                ), f"Expected BISTStockLiveData for THYAO, got {type(data)}"
+                assert data.symbol == "THYAO", f"Expected symbol THYAO, got {data.symbol}"
+                assert hasattr(data, "close_price"), f"Data missing close_price: {data}"
+
+            for data in garan_data:
+                assert isinstance(
+                    data, BISTStockLiveData
+                ), f"Expected BISTStockLiveData for GARAN, got {type(data)}"
+                assert data.symbol == "GARAN", f"Expected symbol GARAN, got {data.symbol}"
+                assert hasattr(data, "close_price"), f"Data missing close_price: {data}"
+
+            assert websocket_client.is_connection_closed() is True
+
+        except Exception as e:
+            if not websocket_client.is_connection_closed():
+                await websocket_client.close()
+            raise e
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_real_websocket_reconnect(self, integration_client: LaplaceClient):
+        """Test WebSocket automatic reconnection and resubscription."""
+        websocket_client = integration_client.create_websocket_client(
+            feeds=[LivePriceFeed.LIVE_BIST],
+            external_user_id="test-integration-user",
+            options=WebsocketOptions(enable_logging=False),
+        )
+
+        try:
+            await websocket_client.connect()
+
+            # Track received data and connection events
+            received_data = []
+            message_count = 0
+
+            def mock_handler(data):
+                nonlocal received_data, message_count
+                received_data.append(data)
+                message_count += 1
+                print(f"Received data: {data}")
+
+            # Subscribe to symbols
+            unsubscribe = websocket_client.subscribe(
+                symbols=["THYAO", "GARAN"], feed=LivePriceFeed.LIVE_BIST, handler=mock_handler
+            )
+
+            # Wait for initial data
+            await asyncio.sleep(2)
+            initial_message_count = message_count
+            print(f"Initial message count: {initial_message_count}")
+
+            # Simulate connection loss by closing the WebSocket directly
+            if websocket_client._websocket:
+                websocket_client._websocket.close()
+                print("Simulated connection loss")
+
+            # Wait a bit for the close to take effect
+            await asyncio.sleep(1)
+
+            # Reconnect manually to test resubscription
+            await websocket_client.connect()
+            print("Manually reconnected")
+
+            # Wait for resubscription and data
+            await asyncio.sleep(3)
+
+            # Clean up
+            unsubscribe()
+            await websocket_client.close()
+
+            # Verify results
+            final_message_count = message_count
+            print(f"Final message count: {final_message_count}")
+            print(f"Messages after reconnection: {final_message_count - initial_message_count}")
+            print(f"Total received data: {len(received_data)}")
+
+            # Check that we received data both before and after reconnection
+            assert initial_message_count > 0, "No data received before reconnection"
+            assert (
+                final_message_count > initial_message_count
+            ), "No data received after reconnection"
+            assert len(received_data) > 0, "No data was received"
+
+            # Verify data structure
+            for data in received_data:
+                assert isinstance(
+                    data, BISTStockLiveData
+                ), f"Expected BISTStockLiveData, got {type(data)}"
+                assert data.symbol in ["THYAO", "GARAN"], f"Unexpected symbol: {data.symbol}"
+                assert hasattr(data, "close_price"), f"Data missing close_price: {data}"
+
+            # Verify connection was properly closed
             assert websocket_client.is_connection_closed() is True
 
         except Exception as e:

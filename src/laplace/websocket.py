@@ -227,9 +227,9 @@ class LivePriceWebSocketClient(BaseClient):
                 # Log the error response for debugging
                 try:
                     error_data = e.response.json()
-                    print(f"HTTP Error Response: {error_data}")
+                    self._log(f"HTTP Error Response: {error_data}", "error")
                 except:
-                    print(f"HTTP Error Response: {e.response.text}")
+                    self._log(f"HTTP Error Response: {e.response.text}", "error")
                 raise
 
     async def connect(self, url: Optional[str] = None) -> None:
@@ -277,7 +277,6 @@ class LivePriceWebSocketClient(BaseClient):
 
     def _on_message(self, ws, message):
         """Called when a message is received."""
-        print(f"Received message: {message}")
         if self._loop:
             asyncio.run_coroutine_threadsafe(self._handle_message(message), self._loop)
 
@@ -322,7 +321,6 @@ class LivePriceWebSocketClient(BaseClient):
         try:
             raw_data = json.loads(message)
             feed = LivePriceFeed(raw_data.get("feed"))
-            print(f"Feed: {feed}")
             message_type = raw_data.get("type")
 
             if message_type == "data":
