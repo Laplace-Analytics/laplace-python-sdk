@@ -13,7 +13,7 @@ from .search import SearchClient
 from .state import StateClient
 from .stocks import StocksClient
 from .websocket import LivePriceWebSocketClient, LivePriceFeed, WebsocketOptions
-from typing import Optional
+from typing import Optional, List
 
 
 class LaplaceClient(BaseClient):
@@ -46,7 +46,7 @@ class LaplaceClient(BaseClient):
 
     def create_websocket_client(
         self,
-        feeds: list[LivePriceFeed],
+        feeds: List[LivePriceFeed],
         external_user_id: str,
         options: Optional[WebsocketOptions] = None,
     ) -> LivePriceWebSocketClient:
