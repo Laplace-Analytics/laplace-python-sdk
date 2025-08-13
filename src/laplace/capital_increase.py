@@ -1,5 +1,6 @@
 """Capital Increase client for Laplace API."""
 
+from typing import List
 from laplace.base import BaseClient
 
 from .models import (
@@ -71,9 +72,7 @@ class CapitalIncreaseClient:
         response = self._client.get(f"v1/capital-increase/{symbol}", params=params)
         return PaginatedResponse[CapitalIncrease](**response)
 
-    def get_active_rights(
-        self, symbol: str, region: Region = Region.TR
-    ) -> PaginatedResponse[CapitalIncrease]:
+    def get_active_rights(self, symbol: str, region: Region = Region.TR) -> List[CapitalIncrease]:
         """Retrieve active rights for a specific stock.
 
         Args:
@@ -81,7 +80,7 @@ class CapitalIncreaseClient:
             region: Region code (only 'tr' is supported) (default: tr)
 
         Returns:
-            PaginatedResponse[CapitalIncrease]: Active rights data
+            List[CapitalIncrease]: Active rights data
         """
         if region != Region.TR:
             raise ValueError("Rights endpoint only works with the 'tr' region")
@@ -89,4 +88,5 @@ class CapitalIncreaseClient:
         params = {"region": region.value}
 
         response = self._client.get(f"v1/rights/active/{symbol}", params=params)
-        return PaginatedResponse[CapitalIncrease](**response)
+
+        return [CapitalIncrease(**item) for item in response]

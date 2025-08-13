@@ -47,7 +47,6 @@ class AssetType(str, Enum):
     COMMODITY = "commodity"
     STOCK_RIGHTS = "stock_rights"
     FUND = "fund"
-    ALL = "all"
 
 
 class AssetClass(str, Enum):
@@ -55,7 +54,6 @@ class AssetClass(str, Enum):
 
     EQUITY = "equity"
     CRYPTO = "crypto"
-    ALL = "all"
 
 
 class Region(str, Enum):
@@ -857,10 +855,9 @@ class SearchResultStock(BaseModel):
 
     id: str
     name: str
-    symbol: str
+    title: str
     region: Region
-    asset_class: AssetClass = Field(alias="assetType")
-    asset_type: AssetType = Field(alias="type")
+    asset_type: AssetType = Field(alias="assetType")
 
     model_config = {"populate_by_name": True}
 
@@ -871,7 +868,9 @@ class SearchResultCollection(BaseModel):
     id: str
     title: str
     region: List[Region]
-    asset_class: AssetClass = Field(alias="assetClass")
+    asset_class: Optional[str] = Field(
+        alias="assetClass", default=None
+    )  # Can be empty string or AssetClass value
     image_url: str = Field(alias="imageUrl")
     avatar_url: str = Field(alias="avatarUrl")
 
@@ -884,8 +883,7 @@ class EarningsTranscriptListItem(BaseModel):
     symbol: str
     year: int
     quarter: int
-    date: str
-    fiscal_year: int = Field(alias="fiscal_year")
+    fiscal_year: Optional[int] = Field(alias="fiscal_year", default=None)
 
     model_config = {"populate_by_name": True}
 
@@ -896,10 +894,9 @@ class EarningsTranscriptWithSummary(BaseModel):
     symbol: str
     year: int
     quarter: int
-    date: str
     content: str
     summary: Optional[str] = None
-    has_summary: bool = Field(alias="has_summary")
+    has_summary: Optional[bool] = Field(alias="has_summary", default=None)
 
     model_config = {"populate_by_name": True}
 
