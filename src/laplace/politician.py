@@ -1,9 +1,10 @@
 from typing import List
+from laplace.base import BaseClient
 from laplace.models import Holding, Politician, PoliticianDetail, TopHolding
 
 
 class PoliticianClient:
-    def __init__(self, base_client):
+    def __init__(self, base_client: BaseClient):
         """Initialize the politician client.
 
         Args:

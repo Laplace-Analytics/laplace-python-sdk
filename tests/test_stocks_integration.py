@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from laplace import LaplaceClient
+from laplace.models import Region, PaginationPageSize, AssetClass
 from laplace.models import (
     Stock,
     StockDetail,
@@ -16,7 +17,7 @@ from tests.conftest import MockResponse
 class TestStocksIntegration:
     """Integration tests for stocks client with real API responses."""
 
-    @patch('httpx.Client')
+    @patch("httpx.Client")
     def test_get_all_stocks(self, mock_httpx_client):
         """Test getting all stocks with real API response."""
         # Real API response from /api/v2/stock/all?page=1&pageSize=5&region=us
@@ -29,7 +30,7 @@ class TestStocksIntegration:
                 "sectorId": "65533e047844ee7afe9941bd",
                 "industryId": "65533e441fa5c7b58afa0962",
                 "updatedDate": "2022-02-09T14:37:46.368Z",
-                "active": True
+                "active": True,
             },
             {
                 "id": "6203d1ba1e67487527555595",
@@ -39,7 +40,7 @@ class TestStocksIntegration:
                 "sectorId": "65533e047844ee7afe9941c0",
                 "industryId": "65533e441fa5c7b58afa097d",
                 "updatedDate": "2022-02-09T14:37:46.368Z",
-                "active": True
+                "active": True,
             },
             {
                 "id": "675a0087188356cdf4eb535d",
@@ -49,8 +50,8 @@ class TestStocksIntegration:
                 "sectorId": "",
                 "industryId": "",
                 "updatedDate": "2024-12-11T21:13:43.572Z",
-                "active": True
-            }
+                "active": True,
+            },
         ]
 
         mock_client_instance = Mock()
@@ -60,8 +61,10 @@ class TestStocksIntegration:
         client = LaplaceClient(api_key="test-key")
 
         # Mock the _client.get method
-        with patch.object(client, 'get', return_value=mock_response_data):
-            stocks = client.stocks.get_all(region="us", page=1, page_size=5)
+        with patch.object(client, "get", return_value=mock_response_data):
+            stocks = client.stocks.get_all(
+                region=Region.US, page=1, page_size=PaginationPageSize.PAGE_SIZE_10
+            )
 
         # Assertions
         assert len(stocks) == 3
@@ -82,7 +85,7 @@ class TestStocksIntegration:
         assert stocks[2].asset_type == "etf"
         assert stocks[2].sector_id == ""  # ETFs have empty sector/industry
 
-    @patch('httpx.Client')
+    @patch("httpx.Client")
     def test_get_stock_detail_by_symbol(self, mock_httpx_client):
         """Test getting stock detail by symbol with real API response."""
         # Real API response from /api/v1/stock/detail?symbol=AAPL&region=us&asset_class=equity
@@ -96,7 +99,7 @@ class TestStocksIntegration:
             "localized_description": {
                 "def": "Apple Inc., yenilikçi tüketici elektroniği, yazılım ve hizmetler tasarlayıp geliştiren, önde gelen küresel bir teknoloji şirketidir.\n\n1976 yılında kurulan ve merkezi Cupertino, Kaliforniya'da bulunan Apple, dünyanın en büyük şirketlerinden biridir ve satışlarının çoğunluğunu oluşturan amiral gemisi ürünü iPhone ile tanınır. Şirket, Mac'ler, iPad'ler, Apple Watch'lar ve Apple Music ile iCloud gibi hizmetleri içeren entegre bir ekosistem sunmaktadır. Apple, yazılımını ve yarı iletkenlerini kendi tasarlamakta, ürünlerini Foxconn ve TSMC gibi ortakları aracılığıyla üretmektedir. Şirket, akış hizmetleri, abonelikler ve diğer yeni teknolojiler alanında sunduğu ürünleri genişletmeye devam etmektedir.",
                 "en": "Apple Inc. is a leading global technology company known for designing and developing a wide range of innovative consumer electronics, software, and services.\n\nFounded in 1976 and headquartered in Cupertino, California, Apple is among the world's largest companies, with the iPhone as its flagship product making up the majority of its sales. It offers an integrated ecosystem that includes Macs, iPads, Apple Watches, and services like Apple Music and iCloud. Apple designs its own software and semiconductors, with products manufactured through partners like Foxconn and TSMC. The company continues to expand its offerings in streaming, subscriptions, and other new technologies.",
-                "tr": "Apple Inc., yenilikçi tüketici elektroniği, yazılım ve hizmetler tasarlayıp geliştiren, önde gelen küresel bir teknoloji şirketidir.\n\n1976 yılında kurulan ve merkezi Cupertino, Kaliforniya'da bulunan Apple, dünyanın en büyük şirketlerinden biridir ve satışlarının çoğunluğunu oluşturan amiral gemisi ürünü iPhone ile tanınır. Şirket, Mac'ler, iPad'ler, Apple Watch'lar ve Apple Music ile iCloud gibi hizmetleri içeren entegre bir ekosistem sunmaktadır. Apple, yazılımını ve yarı iletkenlerini kendi tasarlamakta, ürünlerini Foxconn ve TSMC gibi ortakları aracılığıyla üretmektedir. Şirket, akış hizmetleri, abonelikler ve diğer yeni teknolojiler alanında sunduğu ürünleri genişletmeye devam etmektedir."
+                "tr": "Apple Inc., yenilikçi tüketici elektroniği, yazılım ve hizmetler tasarlayıp geliştiren, önde gelen küresel bir teknoloji şirketidir.\n\n1976 yılında kurulan ve merkezi Cupertino, Kaliforniya'da bulunan Apple, dünyanın en büyük şirketlerinden biridir ve satışlarının çoğunluğunu oluşturan amiral gemisi ürünü iPhone ile tanınır. Şirket, Mac'ler, iPad'ler, Apple Watch'lar ve Apple Music ile iCloud gibi hizmetleri içeren entegre bir ekosistem sunmaktadır. Apple, yazılımını ve yarı iletkenlerini kendi tasarlamakta, ürünlerini Foxconn ve TSMC gibi ortakları aracılığıyla üretmektedir. Şirket, akış hizmetleri, abonelikler ve diğer yeni teknolojiler alanında sunduğu ürünleri genişletmeye devam etmektedir.",
             },
             "region": "us",
             "sectorId": "65533e047844ee7afe9941bf",
@@ -105,9 +108,9 @@ class TestStocksIntegration:
             "shortDescription": "Designs and develops consumer electronics, software, and services, including the iPhone, iPad, and Apple Music.",
             "localizedShortDescription": {
                 "en": "Designs and develops consumer electronics, software, and services, including the iPhone, iPad, and Apple Music.",
-                "tr": "iPhone, iPad ve Apple Music dahil olmak üzere tüketici elektroniği, yazılım ve hizmetleri tasarlar ve geliştirir."
+                "tr": "iPhone, iPad ve Apple Music dahil olmak üzere tüketici elektroniği, yazılım ve hizmetleri tasarlar ve geliştirir.",
             },
-            "active": True
+            "active": True,
         }
 
         mock_client_instance = Mock()
@@ -116,11 +119,9 @@ class TestStocksIntegration:
 
         client = LaplaceClient(api_key="test-key")
 
-        with patch.object(client, 'get', return_value=mock_response_data):
+        with patch.object(client, "get", return_value=mock_response_data):
             stock_detail = client.stocks.get_detail_by_symbol(
-                symbol="AAPL",
-                region="us",
-                asset_class="equity"
+                symbol="AAPL", region=Region.US, asset_class=AssetClass.EQUITY
             )
 
         # Assertions
@@ -149,7 +150,7 @@ class TestStocksIntegration:
         assert "teknoloji şirketidir" in stock_detail.localized_description["tr"]
         assert "tüketici elektroniği" in stock_detail.localized_short_description["tr"]
 
-    @patch('httpx.Client')
+    @patch("httpx.Client")
     def test_get_tick_rules_invalid_region(self, mock_httpx_client):
         """Test that tick rules raises error for non-TR region."""
         mock_client_instance = Mock()
@@ -158,9 +159,9 @@ class TestStocksIntegration:
         client = LaplaceClient(api_key="test-key")
 
         with pytest.raises(ValueError, match="Tick rules endpoint only works with the 'tr' region"):
-            client.stocks.get_tick_rules(region="us")
+            client.stocks.get_tick_rules(region=Region.US)
 
-    @patch('httpx.Client')
+    @patch("httpx.Client")
     def test_get_restrictions_invalid_region(self, mock_httpx_client):
         """Test that restrictions raises error for non-TR region."""
         mock_client_instance = Mock()
@@ -168,10 +169,12 @@ class TestStocksIntegration:
 
         client = LaplaceClient(api_key="test-key")
 
-        with pytest.raises(ValueError, match="Restrictions endpoint only works with the 'tr' region"):
-            client.stocks.get_restrictions(region="us")
+        with pytest.raises(
+            ValueError, match="Restrictions endpoint only works with the 'tr' region"
+        ):
+            client.stocks.get_restrictions(region=Region.US)
 
-    @patch('httpx.Client')
+    @patch("httpx.Client")
     def test_datetime_formatting(self, mock_httpx_client):
         """Test datetime formatting for interval endpoint."""
         mock_client_instance = Mock()
@@ -190,23 +193,23 @@ class TestStocksRealIntegration:
     """Real integration tests (requires API key)."""
 
     @pytest.mark.integration
-    def test_real_get_all_stocks(self, integration_client):
+    def test_real_get_all_stocks(self, integration_client: LaplaceClient):
         """Test real API call for getting all stocks."""
-        stocks = integration_client.stocks.get_all(region="us", page=1, page_size=5)
+        stocks = integration_client.stocks.get_all(
+            region=Region.US, page=1, page_size=PaginationPageSize.PAGE_SIZE_10
+        )
 
-        assert len(stocks) <= 5  # Should return at most 5 stocks
+        assert len(stocks) <= 10  # API returns 10 items by default
         assert all(isinstance(stock, Stock) for stock in stocks)
         assert all(stock.symbol for stock in stocks)  # All should have symbols
         assert all(stock.name for stock in stocks)  # All should have names
         assert all(stock.asset_type for stock in stocks)  # All should have asset types
 
     @pytest.mark.integration
-    def test_real_get_stock_detail_by_symbol(self, integration_client):
+    def test_real_get_stock_detail_by_symbol(self, integration_client: LaplaceClient):
         """Test real API call for getting stock detail by symbol."""
         stock_detail = integration_client.stocks.get_detail_by_symbol(
-            symbol="AAPL",
-            region="us",
-            asset_class="equity"
+            symbol="AAPL", region=Region.US, asset_class=AssetClass.EQUITY
         )
 
         assert isinstance(stock_detail, StockDetail)
