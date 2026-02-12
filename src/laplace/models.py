@@ -46,6 +46,7 @@ class AssetType(str, Enum):
     COMMODITY = "commodity"
     STOCK_RIGHTS = "stock_rights"
     FUND = "fund"
+    ADR = "adr"
 
 
 class AssetClass(str, Enum):
