@@ -499,6 +499,14 @@ class BISTStockOrderBookData(BaseModel):
     symbol: str = Field(alias="s")
 
 
+class BISTBidAskData(BaseModel):
+    """BIST (Turkish) stock bid/ask live data model."""
+
+    symbol: str = Field(alias="s")
+    date: int = Field(alias="d")
+    ask: float
+    bid: float
+
 class Politician(BaseModel):
     """Politician information."""
 
