@@ -1,5 +1,6 @@
 """Main Laplace client."""
 
+from laplace.news import NewsClient
 from .base import BaseClient
 from .brokers import BrokersClient
 from .capital_increase import CapitalIncreaseClient
@@ -40,6 +41,7 @@ class LaplaceClient(BaseClient):
         self.earnings = EarningsClient(self)
         self.search = SearchClient(self)
         self.state = StateClient(self)
+        self.news = NewsClient(self)
 
         # WebSocket client will be created on demand
         self._websocket_client: Optional[LivePriceWebSocketClient] = None

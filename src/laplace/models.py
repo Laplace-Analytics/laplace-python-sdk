@@ -941,3 +941,98 @@ class SearchData(BaseModel):
     industries: List[SearchResultCollection]
 
     model_config = {"populate_by_name": True}
+
+class NewsType(str, Enum):
+    """News type options."""
+
+    Briefs = "briefs"
+    Bloomberg = "bloomberg"
+    Fda = "fda"
+    Reuters = "Reuters"
+
+class NewsOrderBy(str, Enum):
+    """News Order by options."""
+
+    Timestamp = "timestamp"
+
+
+class NewsTicker(BaseModel):
+    id: str
+    name: str
+    symbol: Optional[str] = None
+
+    model_config = {"populate_by_name": True}
+
+class NewsPublisher(BaseModel):
+    name: str
+    logo_url: Optional[str] = Field(alias="logoUrl")
+
+    model_config = {"populate_by_name": True}
+
+class NewsIndustry(BaseModel):
+    name: str
+    mean_type: int = Field(alias="meanType")
+
+    model_config = {"populate_by_name": True}
+
+class NewsSector(BaseModel):
+    name: str
+    news_count: int = Field(alias="newsCount")
+    category_type: Optional[str] = Field(alias="categoryType", default=None)
+    mean_type: Optional[int] = Field(alias="meanType", default=None)
+
+    model_config = {"populate_by_name": True}
+
+class NewsCategory(BaseModel):
+    name: str
+    news_count: int = Field(alias="newsCount")
+    category_type: Optional[str] = Field(alias="categoryType", default=None)
+    mean_type: Optional[int] = Field(alias="meanType", default=None)
+
+    model_config = {"populate_by_name": True}
+
+class NewsContent(BaseModel):
+    title: str
+    description: str
+    content: List[str]
+    summary: List[str]
+    investor_insight: str = Field(alias="investorInsight")
+
+    model_config = {"populate_by_name": True}
+
+class News(BaseModel):
+    created_at: datetime = Field(alias="createdAt")
+    url: str
+    image_url: str = Field(alias="imageUrl")
+    timestamp: datetime
+    publisher_url: str = Field(alias="publisherUrl")
+
+    publisher: NewsPublisher
+    related_tickers: List[NewsTicker] = Field(alias="relatedTickers")
+
+    tickers: Optional[List[NewsTicker]] = None
+    categories: Optional[NewsCategory] = None
+    sectors: Optional[NewsSector] = None
+    content: Optional[NewsContent] = None
+    industries: Optional[NewsIndustry] = None
+
+    quality_score: int = Field(alias="qualityScore")
+
+    model_config = {"populate_by_name": True}
+class NewsHighlight(BaseModel):
+    consumer: List[str]
+    energy_and_utilities: List[str] = Field(alias="energyAndUtilities")
+    finance: List[str]
+    healthcare: List[str]
+    industrials_and_materials: List[str] = Field(alias="industrialsAndMaterials")
+    tech: List[str]
+    other: List[str]
+
+    model_config = {"populate_by_name": True}
+
+class WebsocketMonthlyUsageDataResponse(BaseModel):
+    external_user_id: str = Field(alias="externalUserID")
+    first_connection_time: datetime = Field(alias="firstConnectionTime")
+    unique_device_count: int = Field(alias="uniqueDeviceCount")
+
+    model_config = {"populate_by_name": True}
