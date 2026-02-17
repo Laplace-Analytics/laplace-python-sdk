@@ -150,89 +150,7 @@ class LivePriceWebSocketClient(BaseClient):
         else:
             self._logger.info(message)
 
-    async def update_user_details(
-        self,
-        first_name: Optional[str] = None,
-        last_name: Optional[str] = None,
-        address: Optional[str] = None,
-        city: Optional[str] = None,
-        country_code: Optional[str] = None,
-        accessor_type: Optional[AccessorType] = None,
-        active: bool = True,
-    ) -> None:
-        """Update user details.
-
-        Args:
-            params: User details parameters
-        """
-        url = f"{self.base_url}/api/v1/ws/user"
-
-        data = {
-            "externalUserID": self.external_user_id,
-            "active": active,
-        }
-
-        if first_name:
-            data["firstName"] = first_name
-        if last_name:
-            data["lastName"] = last_name
-        if address:
-            data["address"] = address
-        if city:
-            data["city"] = city
-        if country_code:
-            data["countryCode"] = country_code
-        if accessor_type:
-            data["accessorType"] = accessor_type.value
-
-        await self._async_request("PUT", url, json=data)
-
-    async def _get_websocket_url(self) -> str:
-        """Get WebSocket URL from the API.
-
-        Returns:
-            WebSocket URL
-        """
-        url = f"{self.base_url}/v2/ws/url"
-
-        feeds = [feed.value for feed in self.feeds]
-
-        response = await self._async_request(
-            "POST",
-            url,
-            json={
-                "externalUserId": self.external_user_id,
-                "feeds": feeds,
-            },
-        )
-
-        return response["url"]
-
-    async def _async_request(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
-        """Make an async HTTP request."""
-        import httpx
-
-        # Add API key to params if not already present
-        params = kwargs.get("params", {})
-        if "api_key" not in params:
-            params["api_key"] = self.api_key
-            kwargs["params"] = params
-
-        async with httpx.AsyncClient() as client:
-            response = await client.request(method, url, **kwargs)
-            try:
-                response.raise_for_status()
-                return response.json()
-            except httpx.HTTPStatusError as e:
-                # Log the error response for debugging
-                try:
-                    error_data = e.response.json()
-                    self._log(f"HTTP Error Response: {error_data}", "error")
-                except (ValueError, json.JSONDecodeError):
-                    self._log(f"HTTP Error Response: {e.response.text}", "error")
-                raise
-
-    async def connect(self, url: Optional[str] = None) -> None:
+    async def connect(self, url: str) -> None:
         """Connect to the WebSocket with automatic reconnection.
 
         Args:
@@ -246,10 +164,7 @@ class LivePriceWebSocketClient(BaseClient):
         # Store the current event loop
         self._loop = asyncio.get_running_loop()
 
-        if url:
-            self._ws_url = url
-        else:
-            self._ws_url = await self._get_websocket_url()
+        self._ws_url = url
 
         # Create WebSocket with automatic reconnection
         self._websocket = WebSocketApp(
