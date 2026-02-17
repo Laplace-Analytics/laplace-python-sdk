@@ -819,7 +819,7 @@ class BrokerSort(str, Enum):
     TOTAL_SELL_VOLUME = "totalSellVolume"
 
 
-class BrokerSortDirection(str, Enum):
+class SortDirection(str, Enum):
     """Broker sort direction options."""
 
     DESC = "desc"
