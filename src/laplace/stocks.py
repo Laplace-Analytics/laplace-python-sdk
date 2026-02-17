@@ -341,5 +341,5 @@ class StocksClient:
         """
         params = {"symbol": symbol, "region": region.value}
 
-        response = self._client.get("v1/key-insight", params=params)
+        response = self._client.get("v1/key-insights", params=params)
         return KeyInsight(**response)

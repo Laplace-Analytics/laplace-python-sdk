@@ -641,7 +641,7 @@ class KeyInsight(BaseModel):
     """Key insight model."""
 
     symbol: str
-    insights: str
+    insight: str
 
     model_config = {"populate_by_name": True}
 
