@@ -6,6 +6,7 @@ import uuid
 from enum import Enum
 from typing import AsyncGenerator, Generic, Optional, List
 import httpx
+from laplace.websocket import AccessorType, LivePriceFeed
 from pydantic import BaseModel
 from laplace.models import (
     T,
@@ -15,6 +16,7 @@ from laplace.models import (
     BISTStockLiveData,
     USStockLiveData,
     BISTBidAskData,
+    WebsocketMonthlyUsageDataResponse,
 )
 from laplace.base import BaseClient
 BidAskData = BISTBidAskData
@@ -312,10 +314,10 @@ class BidAskStream:
             await self._queue.put(error_result)
 
 
-class LivePriceClient:
+class LivePriceClient(BaseClient):
     """Main client for live price functionality."""
 
-    def __init__(self, base_client):
+    def __init__(self, base_client: BaseClient):
         self.base_client = base_client
 
     async def get_live_price_for_bist(
@@ -396,3 +398,51 @@ class LivePriceClient:
         stream = BidAskStream(self.base_client)
         await stream.subscribe(symbols)
         return stream
+    
+    def get_websocket_url(
+        self,         
+        feeds: List[LivePriceFeed],
+        external_user_id: str
+    ) -> str:
+        """Get WebSocket URL from the API.
+
+        Returns:
+            WebSocket URL
+        """
+
+        feed_values = [feed.value for feed in feeds]
+
+        response = self.base_client.post(
+            "api/v2/ws/url",
+            json={
+                "externalUserId": external_user_id,
+                "feeds": feed_values,
+            },
+        )
+
+        return response["url"]
+
+    def get_websocket_usage_for_month(
+        self,         
+        year: int,
+        month: int,
+        feed_type: LivePriceFeed
+    ) -> List[WebsocketMonthlyUsageDataResponse]:
+        """Get WebSocket Monthly Usage Data from the API.
+
+        Returns:
+            List[WebsocketMonthlyUsageDataResponse]
+        """
+
+        params = {
+            "year": year,
+            "month": month,
+            "feedType": feed_type.value,
+        }
+
+        response = self.base_client.get(
+            "api/v1/ws/report",
+            params=params,
+        )
+
+        return [WebsocketMonthlyUsageDataResponse(**item) for item in response]

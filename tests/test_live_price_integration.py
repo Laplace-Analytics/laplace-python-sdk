@@ -1,12 +1,14 @@
 """Integration tests for live price client."""
 
+from datetime import datetime
 import os
 import asyncio
+from laplace.websocket import LivePriceFeed
 import pytest
 
 from laplace.client import LaplaceClient
 from laplace.live_price import BISTStockLiveData, USStockLiveData, BidAskResult
-from laplace.models import BISTBidAskData
+from laplace.models import BISTBidAskData, WebsocketMonthlyUsageDataResponse
 
 
 class TestLivePriceIntegration:
@@ -465,3 +467,27 @@ class TestLivePriceIntegration:
         # Note: This test mainly verifies that the stream can handle invalid symbols
         # without crashing. The exact behavior may vary based on API implementation.
         print("✅ Error handling test completed without crashes")
+
+    @pytest.mark.integration
+    def test_real_get_websocket_usage_for_month(self, integration_client: LaplaceClient):
+        usage = integration_client.live_price.get_websocket_usage_for_month(
+            year=2025, month=7, feed_type=LivePriceFeed.LIVE_BIST
+        )
+
+        assert isinstance(usage, list)
+        assert all(isinstance(item, WebsocketMonthlyUsageDataResponse) for item in usage)
+        if usage:
+            assert usage[0].external_user_id is not None
+            assert isinstance(usage[0].first_connection_time, datetime)
+            assert usage[0].unique_device_count >= 0
+
+    @pytest.mark.integration
+    def test_real_get_websocket_url(self, integration_client: LaplaceClient):
+        """Test real API call for getting WebSocket URL."""
+        url = integration_client.live_price.get_websocket_url(
+            feeds=[LivePriceFeed.LIVE_BIST],
+            external_user_id="test-user-123",
+        )
+
+        assert isinstance(url, str)
+        assert url.startswith("wss://") or url.startswith("ws://")
