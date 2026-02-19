@@ -7,6 +7,7 @@ from typing import List, Optional, Union
 from laplace.base import BaseClient
 
 from .models import (
+    AssetType,
     Locale,
     PriceCandle,
     Region,
@@ -159,6 +160,8 @@ class StocksClient:
         from_date: datetime,
         to_date: datetime,
         interval: Union[IntervalPrice, str],
+        detail: bool = False,
+        num_intervals: Optional[int] = None
     ) -> List[PriceCandle]:
         """Retrieve the historical price of a stock with custom date range and interval.
 
@@ -180,12 +183,16 @@ class StocksClient:
             "fromDate": self._format_datetime(from_date),
             "toDate": self._format_datetime(to_date),
             "interval": interval_value,
+            "detail": detail
         }
+
+        if num_intervals:
+            params["numIntervals"] = num_intervals
 
         response = self._client.get("v1/stock/price/interval", params=params)
         return [PriceCandle(**candle) for candle in response]
 
-    def get_tick_rules(self, region: Region = Region.TR) -> StockRules:
+    def get_tick_rules(self, symbol: str, region: Region = Region.TR) -> StockRules:
         """Retrieve the tick rules for creating orderbook and price limits.
 
         Note: This endpoint only works with the "tr" region.
@@ -199,11 +206,11 @@ class StocksClient:
         if region != Region.TR:
             raise ValueError("Tick rules endpoint only works with the 'tr' region")
 
-        params = {"region": region.value}
+        params = {"region": region.value, "symbol": symbol}
         response = self._client.get("v1/stock/rules", params=params)
         return StockRules(**response)
 
-    def get_restrictions(self, region: Region = Region.TR) -> List[StockRestriction]:
+    def get_restrictions(self, symbol, region: Region = Region.TR) -> List[StockRestriction]:
         """Retrieve the restrictions for a stock.
 
         Note: This endpoint only works with the "tr" region.
@@ -217,7 +224,7 @@ class StocksClient:
         if region != Region.TR:
             raise ValueError("Restrictions endpoint only works with the 'tr' region")
 
-        params = {"region": region.value}
+        params = {"region": region.value, "symbol": symbol}
         response = self._client.get("v1/stock/restrictions", params=params)
         return [StockRestriction(**restriction) for restriction in response]
 
@@ -243,6 +250,8 @@ class StocksClient:
         self,
         region: Region,
         direction: str = "gainers",
+        asset_type: AssetType = AssetType.STOCK,
+        asset_class: AssetClass = AssetClass.EQUITY,
         page: int = 0,
         page_size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
     ) -> List[TopMover]:
@@ -262,6 +271,8 @@ class StocksClient:
             "direction": direction,
             "page": page,
             "pageSize": page_size.value,
+            "assetType": asset_type.value,
+            "assetClass": asset_class.value
         }
 
         response = self._client.get("v2/stock/top-movers", params=params)
