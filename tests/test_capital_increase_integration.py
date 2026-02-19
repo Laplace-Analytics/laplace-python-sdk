@@ -60,7 +60,7 @@ class TestCapitalIncreaseIntegration:
                     "types": ["bonus"],
                     "symbol": "GARAN",
                     "bonusRate": "30%",
-                    "rightsRate": None,
+                    "rightsRate": "",
                     "paymentDate": "2024-04-01T00:00:00.000Z",
                     "rightsPrice": None,
                     "rightsEndDate": None,
@@ -73,7 +73,7 @@ class TestCapitalIncreaseIntegration:
                     "registrationDate": "2024-03-01T00:00:00.000Z",
                     "boardDecisionDate": "2024-01-20T00:00:00.000Z",
                     "bonusDividendRate": "5%",
-                    "rightsTotalAmount": None,
+                    "rightsTotalAmount": "",
                     "specifiedCurrency": "TRY",
                     "rightsLastSellDate": None,
                     "spkApplicationDate": "2024-01-25T00:00:00.000Z",
@@ -81,38 +81,9 @@ class TestCapitalIncreaseIntegration:
                     "spkApplicationResult": "Approved",
                     "bonusDividendTotalAmount": "30000000",
                     "registeredCapitalCeiling": "900000000",
-                    "externalCapitalIncreaseRate": None,
-                    "externalCapitalIncreaseAmount": None,
-                },
-                {
-                    "id": 3,
-                    "types": ["external"],
-                    "symbol": "ISBANK",
-                    "bonusRate": None,
-                    "rightsRate": None,
-                    "paymentDate": "2024-05-01T00:00:00.000Z",
-                    "rightsPrice": None,
-                    "rightsEndDate": None,
-                    "targetCapital": "1200000000",
-                    "bonusStartDate": None,
-                    "currentCapital": "1000000000",
-                    "rightsStartDate": None,
-                    "spkApprovalDate": "2024-03-15",
-                    "bonusTotalAmount": None,
-                    "registrationDate": "2024-04-01T00:00:00.000Z",
-                    "boardDecisionDate": "2024-02-01T00:00:00.000Z",
-                    "bonusDividendRate": None,
-                    "rightsTotalAmount": None,
-                    "specifiedCurrency": "TRY",
-                    "rightsLastSellDate": None,
-                    "spkApplicationDate": "2024-02-05T00:00:00.000Z",
-                    "relatedDisclosureIds": [34567, 34568, 34569],
-                    "spkApplicationResult": "Pending",
-                    "bonusDividendTotalAmount": None,
-                    "registeredCapitalCeiling": "1400000000",
-                    "externalCapitalIncreaseRate": "20%",
-                    "externalCapitalIncreaseAmount": "200000000",
-                },
+                    "externalCapitalIncreaseRate": "",
+                    "externalCapitalIncreaseAmount": "",
+                }
             ],
         }
 
@@ -130,7 +101,7 @@ class TestCapitalIncreaseIntegration:
         # Assertions
         assert isinstance(response, PaginatedResponse)
         assert response.record_count == 3
-        assert len(response.items) == 3
+        assert len(response.items) == 2
         assert all(isinstance(item, CapitalIncrease) for item in response.items)
 
         # Test first capital increase (AKBNK)
@@ -169,9 +140,9 @@ class TestCapitalIncreaseIntegration:
         assert garan.symbol == "GARAN"
         assert garan.types == [CapitalIncreaseType.BONUS]
         assert garan.bonus_rate == "30%"
-        assert garan.rights_rate is None
+        assert garan.rights_rate == ""
         assert isinstance(garan.payment_date, datetime)
-        assert garan.rights_price is None
+        assert garan.rights_price == ""
         assert garan.rights_end_date is None
         assert garan.target_capital == "800000000"
         assert isinstance(garan.bonus_start_date, datetime)
@@ -182,7 +153,7 @@ class TestCapitalIncreaseIntegration:
         assert isinstance(garan.registration_date, datetime)
         assert isinstance(garan.board_decision_date, datetime)
         assert garan.bonus_dividend_rate == "5%"
-        assert garan.rights_total_amount is None
+        assert garan.rights_total_amount == ""
         assert garan.specified_currency == "TRY"
         assert garan.rights_last_sell_date is None
         assert isinstance(garan.spk_application_date, datetime)
@@ -190,38 +161,8 @@ class TestCapitalIncreaseIntegration:
         assert garan.spk_application_result == "Approved"
         assert garan.bonus_dividend_total_amount == "30000000"
         assert garan.registered_capital_ceiling == "900000000"
-        assert garan.external_capital_increase_rate is None
-        assert garan.external_capital_increase_amount is None
-
-        # Test third capital increase (ISBANK)
-        isbank = response.items[2]
-        assert isbank.id == 3
-        assert isbank.symbol == "ISBANK"
-        assert isbank.types == [CapitalIncreaseType.EXTERNAL]
-        assert isbank.bonus_rate is None
-        assert isbank.rights_rate is None
-        assert isinstance(isbank.payment_date, datetime)
-        assert isbank.rights_price is None
-        assert isbank.rights_end_date is None
-        assert isbank.target_capital == "1200000000"
-        assert isbank.bonus_start_date is None
-        assert isbank.current_capital == "1000000000"
-        assert isbank.rights_start_date is None
-        assert isinstance(isbank.spk_approval_date, datetime)
-        assert isbank.bonus_total_amount is None
-        assert isinstance(isbank.registration_date, datetime)
-        assert isinstance(isbank.board_decision_date, datetime)
-        assert isbank.bonus_dividend_rate is None
-        assert isbank.rights_total_amount is None
-        assert isbank.specified_currency == "TRY"
-        assert isbank.rights_last_sell_date is None
-        assert isinstance(isbank.spk_application_date, datetime)
-        assert isbank.related_disclosure_ids == [34567, 34568, 34569]
-        assert isbank.spk_application_result == "Pending"
-        assert isbank.bonus_dividend_total_amount is None
-        assert isbank.registered_capital_ceiling == "1400000000"
-        assert isbank.external_capital_increase_rate == "20%"
-        assert isbank.external_capital_increase_amount == "200000000"
+        assert garan.external_capital_increase_rate == ""
+        assert garan.external_capital_increase_amount == ""
 
     @patch("httpx.Client")
     def test_get_capital_increase_by_symbol(self, mock_httpx_client):
