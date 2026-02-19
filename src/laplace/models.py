@@ -68,6 +68,10 @@ Locale = Literal[
     "en",
 ]
 
+class CollectionStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+
 
 class Stock(BaseModel):
     """Stock model from the stocks API."""
@@ -168,128 +172,44 @@ class StockRestriction(BaseModel):
 
 
 class CollectionStock(BaseModel):
-    """Stock information within a collection."""
-
     id: str
+    asset_type: str = Field(alias="assetType")
     name: str
     symbol: str
     sector_id: str = Field(alias="sectorId")
-    asset_type: AssetType = Field(alias="assetType")
     industry_id: str = Field(alias="industryId")
+    updated_date: datetime = Field(alias="updatedDate")
+    daily_change: Optional[float] = Field(alias="dailyChange", default=None)
+    active: bool
 
     model_config = {"populate_by_name": True}
 
 
 class Collection(BaseModel):
-    """Collection model."""
-
     id: str
     title: str
-    region: List[Region]
+    region: Optional[List[str]] = None
     image_url: str = Field(alias="imageUrl")
     avatar_url: str = Field(alias="avatarUrl")
     num_stocks: int = Field(alias="numStocks")
-    asset_class: AssetClass = Field(alias="assetClass")
+    asset_class: Optional[str] = Field(alias="assetClass", default=None)
+
+    # Custom theme fields
+    description: Optional[str] = None
+    image: Optional[str] = None
+    order: Optional[int] = None
+    status: Optional[str] = None
+    meta_data: Optional[dict] = Field(alias="metaData", default=None)
 
     model_config = {"populate_by_name": True}
 
 
-class CollectionDetail(BaseModel):
+class CollectionDetail(Collection):
     """Detailed collection information."""
 
-    id: str
-    title: str
-    region: List[Region]
-    stocks: List[CollectionStock]
-    image_url: str = Field(alias="imageUrl")
-    avatar_url: str = Field(alias="avatarUrl")
-    num_stocks: int = Field(alias="numStocks")
-    asset_class: AssetClass = Field(alias="assetClass")
-
-    model_config = {"populate_by_name": True}
-
-
-class Theme(BaseModel):
-    """Theme model."""
-
-    id: str
-    title: str
-    region: List[Region]
-    image_url: str = Field(alias="imageUrl")
-    avatar_url: str = Field(alias="avatarUrl")
-    num_stocks: int = Field(alias="numStocks")
-    asset_class: AssetClass = Field(alias="assetClass")
-
-    model_config = {"populate_by_name": True}
-
-
-class ThemeDetail(BaseModel):
-    """Detailed theme information."""
-
-    id: str
-    title: str
-    region: List[Region]
-    stocks: List[CollectionStock]
-    image_url: str = Field(alias="imageUrl")
-    avatar_url: str = Field(alias="avatarUrl")
-    num_stocks: int = Field(alias="numStocks")
-    asset_class: AssetClass = Field(alias="assetClass")
-
-    model_config = {"populate_by_name": True}
-
-
-class Industry(BaseModel):
-    """Industry model."""
-
-    id: str
-    title: str
-    image_url: str = Field(alias="imageUrl")
-    avatar_url: str = Field(alias="avatarUrl")
-    num_stocks: int = Field(alias="numStocks")
-
-    model_config = {"populate_by_name": True}
-
-
-class IndustryDetail(BaseModel):
-    """Detailed industry information."""
-
-    id: str
-    title: str
-    region: List[Region]
-    stocks: List[CollectionStock]
-    image_url: str = Field(alias="imageUrl")
-    avatar_url: str = Field(alias="avatarUrl")
-    num_stocks: int = Field(alias="numStocks")
     stocks: List[CollectionStock]
 
     model_config = {"populate_by_name": True}
-
-
-class Sector(BaseModel):
-    """Sector model."""
-
-    id: str
-    title: str
-    image_url: str = Field(alias="imageUrl")
-    avatar_url: str = Field(alias="avatarUrl")
-    num_stocks: int = Field(alias="numStocks")
-
-    model_config = {"populate_by_name": True}
-
-
-class SectorDetail(BaseModel):
-    """Detailed sector information."""
-
-    id: str
-    title: str
-    region: List[Region]
-    stocks: List[CollectionStock]
-    image_url: str = Field(alias="imageUrl")
-    avatar_url: str = Field(alias="avatarUrl")
-    num_stocks: int = Field(alias="numStocks")
-
-    model_config = {"populate_by_name": True}
-
 
 class RatioComparisonPeerType(str, Enum):
     """Peer type for ratio comparison."""
