@@ -118,6 +118,14 @@ class PriceCandle(BaseModel):
     low: float = Field(alias="l")
     open: float = Field(alias="o")
 
+    unadjusted_open: Optional[float] = Field(default=None, alias="uo")
+    unadjusted_high: Optional[float] = Field(default=None, alias="uh")
+    unadjusted_low: Optional[float] = Field(default=None, alias="ul")
+    unadjusted_close: Optional[float] = Field(default=None, alias="uc")
+
+    volume: Optional[float] = Field(default=None, alias="v")
+    unadjusted_volume: Optional[float] = Field(default=None, alias="uv")
+
 
 class StockPriceData(BaseModel):
     """Stock price data with different time intervals."""
@@ -509,6 +517,7 @@ class Dividend(BaseModel):
     """Stock dividend model."""
 
     date: datetime
+    currency: Currency
     net_ratio: float = Field(alias="netRatio")
     net_amount: float = Field(alias="netAmount")
     price_then: float = Field(alias="priceThen")
@@ -523,7 +532,7 @@ class Dividend(BaseModel):
 class StockStats(BaseModel):
     """Stock statistics model."""
 
-    eps: float
+    eps: Optional[float] = None
     day_low: float = Field(alias="dayLow")
     symbol: str
     day_high: float = Field(alias="dayHigh")
@@ -536,6 +545,7 @@ class StockStats(BaseModel):
     ytd_return: float = Field(alias="ytdReturn")
     three_year_return: float = Field(alias="3YearReturn")
     five_year_return: float = Field(alias="5YearReturn")
+    daily_change: float = Field(alias="dailyChange")
     latest_price: float = Field(alias="latestPrice")
     three_month_return: float = Field(alias="3MonthReturn")
     weekly_return: float = Field(alias="weeklyReturn")
