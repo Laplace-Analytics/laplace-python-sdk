@@ -4,7 +4,7 @@ import asyncio
 import json
 import uuid
 from enum import Enum
-from typing import AsyncGenerator, Generic, Optional, List
+from typing import Any, AsyncGenerator, Dict, Generic, Optional, List
 import httpx
 from laplace.websocket import AccessorType, LivePriceFeed
 from pydantic import BaseModel
@@ -446,3 +446,32 @@ class LivePriceClient(BaseClient):
         )
 
         return [WebsocketMonthlyUsageDataResponse(**item) for item in response]
+    
+
+    def send_websocket_event(
+        self,
+        event: Dict[str, Any],
+        external_user_id: Optional[str] = None,
+        transient: Optional[bool] = None,
+        broadcast_to_all: bool = False
+    ) -> None:
+        if not event:
+            raise ValueError("The 'event' field is required.")
+
+        if not broadcast_to_all and not external_user_id:
+            raise ValueError(
+                "external_user_id is required when broadcast_to_all is False."
+            )
+
+        data = {
+            "event": event,
+            "broadCastToAll": broadcast_to_all
+        }
+
+        if external_user_id:
+            data["externalUserID"] = external_user_id
+            
+        if transient is not None:
+            data["transient"] = transient
+
+        self.base_client.post("api/v1/ws/event", json=data)
