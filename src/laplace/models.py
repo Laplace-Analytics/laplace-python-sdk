@@ -727,85 +727,45 @@ class Broker(BaseModel):
     name: str
     symbol: str
     long_name: str = Field(alias="longName")
+    supported_asset_classes: Optional[List[AssetClass]] =  Field(alias="supportedAssetClasses", default=None)
 
     model_config = {"populate_by_name": True}
 
-
-class BrokerTradingData(BaseModel):
-    """Broker trading data model."""
-
-    broker: Broker
-    net_amount: float = Field(alias="netAmount")
-    total_amount: float = Field(alias="totalAmount")
-    total_volume: int = Field(alias="totalVolume")
-    total_buy_amount: float = Field(alias="totalBuyAmount")
-    total_buy_volume: int = Field(alias="totalBuyVolume")
-    total_sell_amount: float = Field(alias="totalSellAmount")
-    total_sell_volume: int = Field(alias="totalSellVolume")
-
-    model_config = {"populate_by_name": True}
-
-
-class BrokerTotalStats(BaseModel):
-    """Broker total statistics model."""
-
-    net_amount: float = Field(alias="netAmount")
-    total_amount: float = Field(alias="totalAmount")
-    total_volume: int = Field(alias="totalVolume")
-    total_buy_amount: float = Field(alias="totalBuyAmount")
-    total_buy_volume: int = Field(alias="totalBuyVolume")
-    total_sell_amount: float = Field(alias="totalSellAmount")
-    total_sell_volume: int = Field(alias="totalSellVolume")
-
-    model_config = {"populate_by_name": True}
-
-
-class BrokerMarketData(BaseModel):
-    """Broker market data model."""
-
-    items: List[BrokerTradingData]
-    total_stats: BrokerTotalStats = Field(alias="totalStats")
-    record_count: int = Field(alias="recordCount")
-
-    model_config = {"populate_by_name": True}
-
-
-class StockInfo(BaseModel):
-    """Stock information model."""
-
+class BrokerStock(BaseModel):
     id: str
-    name: str
     symbol: str
-    asset_type: AssetType = Field(alias="assetType")
-    asset_class: AssetClass = Field(alias="assetClass")
+    name: str
+    asset_type: str = Field(alias="assetType")
+    asset_class: str = Field(alias="assetClass")
+    logo_url: Optional[str] = Field(alias="logoUrl", default=None)
+    exchange: Optional[str] = Field(alias="exchange", default=None)
 
-    model_config = {"populate_by_name": True}
-
-
-class StockTradingData(BaseModel):
-    """Stock trading data model."""
-
-    stock: StockInfo
-    net_amount: float = Field(alias="netAmount")
-    total_amount: float = Field(alias="totalAmount")
-    total_volume: int = Field(alias="totalVolume")
+class BrokerStats(BaseModel):
     total_buy_amount: float = Field(alias="totalBuyAmount")
-    total_buy_volume: int = Field(alias="totalBuyVolume")
     total_sell_amount: float = Field(alias="totalSellAmount")
-    total_sell_volume: int = Field(alias="totalSellVolume")
+    net_amount: float = Field(alias="netAmount")
+    total_buy_volume: float = Field(alias="totalBuyVolume")
+    total_sell_volume: float = Field(alias="totalSellVolume")
+    total_volume: float = Field(alias="totalVolume")
+    total_amount: float = Field(alias="totalAmount")
+    average_cost: Optional[float] = Field(alias="averageCost", default=None)
 
-    model_config = {"populate_by_name": True}
+class BrokerItem(BrokerStats):
+    broker: Optional[Broker] = None
+    stock: Optional[BrokerStock] = None
 
+class PaginatedResponse(BaseModel, Generic[T]):
+    """Generic paginated response model."""
 
-class BrokerStockData(BaseModel):
-    """Broker stock data model."""
-
-    items: List[StockTradingData]
-    total_stats: BrokerTotalStats = Field(alias="totalStats")
     record_count: int = Field(alias="recordCount")
+    items: List[T]
 
     model_config = {"populate_by_name": True}
 
+class BrokerList(PaginatedResponse[BrokerItem]):
+    total_stats: BrokerStats = Field(alias="totalStats")
+
+    model_config = {"populate_by_name": True}
 
 class BrokerSort(str, Enum):
     """Broker sort options."""
@@ -919,15 +879,6 @@ class MarketState(BaseModel):
     state: str
     last_timestamp: datetime = Field(alias="lastTimestamp")
     stock_symbol: Optional[str] = Field(alias="stockSymbol", default=None)
-
-    model_config = {"populate_by_name": True}
-
-
-class PaginatedResponse(BaseModel, Generic[T]):
-    """Generic paginated response model."""
-
-    record_count: int = Field(alias="recordCount")
-    items: List[T]
 
     model_config = {"populate_by_name": True}
 
