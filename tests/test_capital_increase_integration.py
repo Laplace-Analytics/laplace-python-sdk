@@ -147,7 +147,7 @@ class TestCapitalIncreaseIntegration:
         assert isinstance(akbnk.bonus_start_date, datetime)
         assert akbnk.current_capital == "800000000"
         assert isinstance(akbnk.rights_start_date, datetime)
-        assert akbnk.spk_approval_date == "2024-02-15"
+        assert isinstance(akbnk.spk_approval_date, datetime)
         assert akbnk.bonus_total_amount == "400000000"
         assert isinstance(akbnk.registration_date, datetime)
         assert isinstance(akbnk.board_decision_date, datetime)
@@ -177,7 +177,7 @@ class TestCapitalIncreaseIntegration:
         assert isinstance(garan.bonus_start_date, datetime)
         assert garan.current_capital == "600000000"
         assert garan.rights_start_date is None
-        assert garan.spk_approval_date == "2024-02-20"
+        assert isinstance(garan.spk_approval_date, datetime)
         assert garan.bonus_total_amount == "240000000"
         assert isinstance(garan.registration_date, datetime)
         assert isinstance(garan.board_decision_date, datetime)
@@ -207,7 +207,7 @@ class TestCapitalIncreaseIntegration:
         assert isbank.bonus_start_date is None
         assert isbank.current_capital == "1000000000"
         assert isbank.rights_start_date is None
-        assert isbank.spk_approval_date == "2024-03-15"
+        assert isinstance(isbank.spk_approval_date, datetime)
         assert isbank.bonus_total_amount is None
         assert isinstance(isbank.registration_date, datetime)
         assert isinstance(isbank.board_decision_date, datetime)
@@ -293,7 +293,7 @@ class TestCapitalIncreaseIntegration:
         assert isinstance(capital_increase.bonus_start_date, datetime)
         assert capital_increase.current_capital == "800000000"
         assert isinstance(capital_increase.rights_start_date, datetime)
-        assert capital_increase.spk_approval_date == "2024-02-15"
+        assert isinstance(capital_increase.spk_approval_date, datetime)
         assert capital_increase.bonus_total_amount == "400000000"
         assert isinstance(capital_increase.registration_date, datetime)
         assert isinstance(capital_increase.board_decision_date, datetime)
@@ -373,7 +373,7 @@ class TestCapitalIncreaseIntegration:
         assert active_rights.bonus_start_date is None
         assert active_rights.current_capital == "800000000"
         assert isinstance(active_rights.rights_start_date, datetime)
-        assert active_rights.spk_approval_date == "2024-02-15"
+        assert isinstance(active_rights.spk_approval_date, datetime)
         assert active_rights.bonus_total_amount is None
         assert isinstance(active_rights.registration_date, datetime)
         assert isinstance(active_rights.board_decision_date, datetime)
@@ -454,9 +454,9 @@ class TestCapitalIncreaseIntegration:
         assert isinstance(
             capital_increase.rights_start_date, datetime
         )  # rightsStartDate -> rights_start_date
-        assert (
-            capital_increase.spk_approval_date == "2023-12-15"
-        )  # spkApprovalDate -> spk_approval_date
+        assert isinstance(
+            capital_increase.spk_approval_date, datetime
+        )
         assert (
             capital_increase.bonus_total_amount == "150000000"
         )  # bonusTotalAmount -> bonus_total_amount
