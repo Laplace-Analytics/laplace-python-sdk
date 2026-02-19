@@ -119,3 +119,7 @@ class BaseClient:
     def delete(self, endpoint: str) -> Dict[str, Any]:
         """Make a DELETE request."""
         return self._request("DELETE", endpoint)
+    
+    def patch(self, endpoint: str, json: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Make a PATCH request."""
+        return self._request("PATCH", endpoint, json=json)
