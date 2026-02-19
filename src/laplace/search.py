@@ -1,6 +1,6 @@
 """Search client for Laplace API."""
 
-from typing import List
+from typing import List, Optional
 
 from laplace.base import BaseClient
 
@@ -28,6 +28,8 @@ class SearchClient:
         types: List[SearchType],
         region: Region,
         locale: str = "en",
+        page: Optional[int] = None,
+        size: Optional[int] = None,
     ) -> SearchData:
         """Search for stocks, sectors, industries, and collections.
 
@@ -46,6 +48,12 @@ class SearchClient:
             "region": region.value,
             "locale": locale,
         }
+
+        if page:
+            params["page"] = page
+
+        if size:
+            params["size"] = size
 
         response = self._client.get("v1/search", params=params)
         return SearchData(**response)
