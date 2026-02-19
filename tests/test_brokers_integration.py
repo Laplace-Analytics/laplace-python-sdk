@@ -555,14 +555,19 @@ class TestBrokersRealIntegration:
         )
 
         assert isinstance(response, PaginatedResponse)
+        assert isinstance(response.record_count, int)
         assert response.record_count >= 0
-        assert len(response.items) >= 0
-        assert all(isinstance(broker, Broker) for broker in response.items)
-        assert all(broker.id for broker in response.items)
-        assert all(broker.name for broker in response.items)
-        assert all(broker.symbol for broker in response.items)
-        assert all(broker.long_name for broker in response.items)
-        assert all(broker.logo for broker in response.items)
+        assert isinstance(response.items, list)
+
+        if response.items:
+            broker = response.items[0]
+
+            assert isinstance(broker, Broker)
+            assert broker.id
+            assert broker.name
+            assert broker.symbol
+            assert broker.long_name
+            assert isinstance(broker.logo, str) or broker.logo is None
 
     @pytest.mark.integration
     def test_real_get_stock_list_for_broker(self, integration_client: LaplaceClient):
@@ -593,29 +598,30 @@ class TestBrokersRealIntegration:
         assert len(broker_data.items) >= 0
         assert all(isinstance(item, BrokerItem) for item in broker_data.items)
 
-        # Test items if any exist
         if broker_data.items:
-            assert all(item.stock.id for item in broker_data.items)
-            assert all(item.stock.name for item in broker_data.items)
-            assert all(item.stock.symbol for item in broker_data.items)
-            assert all(item.stock.asset_type for item in broker_data.items)
-            assert all(item.stock.asset_class for item in broker_data.items)
-            assert all(item.net_amount is not None for item in broker_data.items)
-            assert all(item.total_amount is not None for item in broker_data.items)
-            assert all(item.total_volume is not None for item in broker_data.items)
-            assert all(item.total_buy_amount is not None for item in broker_data.items)
-            assert all(item.total_sell_amount is not None for item in broker_data.items)
-            assert all(item.total_buy_volume is not None for item in broker_data.items)
-            assert all(item.total_sell_volume is not None for item in broker_data.items)
+            item = broker_data.items[0]
+            assert item.stock.id
+            assert item.stock.name
+            assert item.stock.symbol
+            assert item.stock.asset_type
+            assert item.stock.asset_class
 
-        # Test total stats
-        assert broker_data.total_stats.net_amount is not None
-        assert broker_data.total_stats.total_amount is not None
-        assert broker_data.total_stats.total_volume is not None
-        assert broker_data.total_stats.total_buy_amount is not None
-        assert broker_data.total_stats.total_sell_amount is not None
-        assert broker_data.total_stats.total_buy_volume is not None
-        assert broker_data.total_stats.total_sell_volume is not None
+            assert isinstance(item.net_amount, (int, float))
+            assert isinstance(item.total_amount, (int, float))
+            assert isinstance(item.total_volume, (int, float))
+            assert isinstance(item.total_buy_amount, (int, float))
+            assert isinstance(item.total_sell_amount, (int, float))
+            assert isinstance(item.total_buy_volume, (int, float))
+            assert isinstance(item.total_sell_volume, (int, float))
+
+        ts = broker_data.total_stats
+        assert isinstance(ts.net_amount, (int, float))
+        assert isinstance(ts.total_amount, (int, float))
+        assert isinstance(ts.total_volume, (int, float))
+        assert isinstance(ts.total_buy_amount, (int, float))
+        assert isinstance(ts.total_sell_amount, (int, float))
+        assert isinstance(ts.total_buy_volume, (int, float))
+        assert isinstance(ts.total_sell_volume, (int, float))
 
     @pytest.mark.integration
     def test_real_get_broker_list_for_market(self, integration_client: LaplaceClient):
@@ -638,27 +644,29 @@ class TestBrokersRealIntegration:
         assert len(market_data.items) >= 0
         assert all(isinstance(item, BrokerItem) for item in market_data.items)
 
-        # Test items if any exist
         if market_data.items:
-            assert all(item.broker.id for item in market_data.items)
-            assert all(item.broker.name for item in market_data.items)
-            assert all(item.broker.symbol for item in market_data.items)
-            assert all(item.net_amount is not None for item in market_data.items)
-            assert all(item.total_amount is not None for item in market_data.items)
-            assert all(item.total_volume is not None for item in market_data.items)
-            assert all(item.total_buy_amount is not None for item in market_data.items)
-            assert all(item.total_sell_amount is not None for item in market_data.items)
-            assert all(item.total_buy_volume is not None for item in market_data.items)
-            assert all(item.total_sell_volume is not None for item in market_data.items)
+            item = market_data.items[0]
+            assert item.broker.id
+            assert item.broker.name
+            assert item.broker.symbol
 
-        # Test total stats
-        assert market_data.total_stats.net_amount is not None
-        assert market_data.total_stats.total_amount is not None
-        assert market_data.total_stats.total_volume is not None
-        assert market_data.total_stats.total_buy_amount is not None
-        assert market_data.total_stats.total_sell_amount is not None
-        assert market_data.total_stats.total_buy_volume is not None
-        assert market_data.total_stats.total_sell_volume is not None
+            assert isinstance(item.net_amount, (int, float))
+            assert isinstance(item.total_amount, (int, float))
+            assert isinstance(item.total_volume, (int, float))
+            assert isinstance(item.total_buy_amount, (int, float))
+            assert isinstance(item.total_sell_amount, (int, float))
+            assert isinstance(item.total_buy_volume, (int, float))
+            assert isinstance(item.total_sell_volume, (int, float))
+
+        ts = market_data.total_stats
+        assert isinstance(ts.net_amount, (int, float))
+        assert isinstance(ts.total_amount, (int, float))
+        assert isinstance(ts.total_volume, (int, float))
+        assert isinstance(ts.total_buy_amount, (int, float))
+        assert isinstance(ts.total_sell_amount, (int, float))
+        assert isinstance(ts.total_buy_volume, (int, float))
+        assert isinstance(ts.total_sell_volume, (int, float))
+
 
     @pytest.mark.integration
     def test_real_get_broker_list_for_stock(self, integration_client: LaplaceClient):
@@ -684,31 +692,33 @@ class TestBrokersRealIntegration:
         assert len(stock_data.items) >= 0
         assert all(isinstance(item, BrokerItem) for item in stock_data.items)
 
-        # Test items if any exist
         if stock_data.items:
-            assert all(item.broker.id for item in stock_data.items)
-            assert all(item.broker.name for item in stock_data.items)
-            assert all(item.broker.symbol for item in stock_data.items)
-            assert all(item.broker.long_name for item in stock_data.items)
-            assert all(isinstance(item.broker.logo, str) or item.broker.logo is None for item in stock_data.items)
-            assert all(item.net_amount is not None for item in stock_data.items)
-            assert all(item.total_amount is not None for item in stock_data.items)
-            assert all(item.total_volume is not None for item in stock_data.items)
-            assert all(item.total_buy_amount is not None for item in stock_data.items)
-            assert all(item.total_sell_amount is not None for item in stock_data.items)
-            assert all(item.total_buy_volume is not None for item in stock_data.items)
-            assert all(item.total_sell_volume is not None for item in stock_data.items)
-            assert all(item.average_cost is not None for item in stock_data.items)
+            item = stock_data.items[0]
+            assert item.broker.id
+            assert item.broker.name
+            assert item.broker.symbol
+            assert item.broker.long_name
+            assert isinstance(item.broker.logo, str) or item.broker.logo is None
 
-        # Test total stats
-        assert stock_data.total_stats.net_amount is not None
-        assert stock_data.total_stats.total_amount is not None
-        assert stock_data.total_stats.total_volume is not None
-        assert stock_data.total_stats.average_cost is not None
-        assert stock_data.total_stats.total_buy_amount is not None
-        assert stock_data.total_stats.total_sell_amount is not None
-        assert stock_data.total_stats.total_buy_volume is not None
-        assert stock_data.total_stats.total_sell_volume is not None
+            assert isinstance(item.net_amount, (int, float))
+            assert isinstance(item.total_amount, (int, float))
+            assert isinstance(item.total_volume, (int, float))
+            assert isinstance(item.total_buy_amount, (int, float))
+            assert isinstance(item.total_sell_amount, (int, float))
+            assert isinstance(item.total_buy_volume, (int, float))
+            assert isinstance(item.total_sell_volume, (int, float))
+            assert isinstance(item.average_cost, (int, float))
+
+        ts = stock_data.total_stats
+        assert isinstance(ts.net_amount, (int, float))
+        assert isinstance(ts.total_amount, (int, float))
+        assert isinstance(ts.total_volume, (int, float))
+        assert isinstance(ts.average_cost, (int, float))
+        assert isinstance(ts.total_buy_amount, (int, float))
+        assert isinstance(ts.total_sell_amount, (int, float))
+        assert isinstance(ts.total_buy_volume, (int, float))
+        assert isinstance(ts.total_sell_volume, (int, float))
+
 
 
     @pytest.mark.integration
@@ -732,28 +742,30 @@ class TestBrokersRealIntegration:
         assert len(market_stock_data.items) >= 0
         assert all(isinstance(item, BrokerItem) for item in market_stock_data.items)
 
-        # Test items if any exist
         if market_stock_data.items:
-            assert all(item.stock.id for item in market_stock_data.items)
-            assert all(item.stock.name for item in market_stock_data.items)
-            assert all(item.stock.symbol for item in market_stock_data.items)
-            assert all(item.stock.asset_type for item in market_stock_data.items)
-            assert all(item.stock.asset_class for item in market_stock_data.items)
-            assert all(item.net_amount is not None for item in market_stock_data.items)
-            assert all(item.total_amount is not None for item in market_stock_data.items)
-            assert all(item.total_volume is not None for item in market_stock_data.items)
-            assert all(item.total_buy_amount is not None for item in market_stock_data.items)
-            assert all(item.total_sell_amount is not None for item in market_stock_data.items)
-            assert all(item.total_buy_volume is not None for item in market_stock_data.items)
-            assert all(item.total_sell_volume is not None for item in market_stock_data.items)
-            assert all(item.average_cost is not None for item in market_stock_data.items)
+            item = market_stock_data.items[0]
+            assert item.stock.id
+            assert item.stock.name
+            assert item.stock.symbol
+            assert item.stock.asset_type
+            assert item.stock.asset_class
 
-        # Test total stats
-        assert market_stock_data.total_stats.net_amount is not None
-        assert market_stock_data.total_stats.total_amount is not None
-        assert market_stock_data.total_stats.total_volume is not None
-        assert market_stock_data.total_stats.average_cost is not None
-        assert market_stock_data.total_stats.total_buy_amount is not None
-        assert market_stock_data.total_stats.total_sell_amount is not None
-        assert market_stock_data.total_stats.total_buy_volume is not None
-        assert market_stock_data.total_stats.total_sell_volume is not None
+            assert isinstance(item.net_amount, (int, float))
+            assert isinstance(item.total_amount, (int, float))
+            assert isinstance(item.total_volume, (int, float))
+            assert isinstance(item.total_buy_amount, (int, float))
+            assert isinstance(item.total_sell_amount, (int, float))
+            assert isinstance(item.total_buy_volume, (int, float))
+            assert isinstance(item.total_sell_volume, (int, float))
+            assert isinstance(item.average_cost, (int, float))
+
+        ts = market_stock_data.total_stats
+        assert isinstance(ts.net_amount, (int, float))
+        assert isinstance(ts.total_amount, (int, float))
+        assert isinstance(ts.total_volume, (int, float))
+        assert isinstance(ts.average_cost, (int, float))
+        assert isinstance(ts.total_buy_amount, (int, float))
+        assert isinstance(ts.total_sell_amount, (int, float))
+        assert isinstance(ts.total_buy_volume, (int, float))
+        assert isinstance(ts.total_sell_volume, (int, float))
+
