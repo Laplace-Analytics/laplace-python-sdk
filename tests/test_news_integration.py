@@ -9,7 +9,6 @@ from laplace.models import (
     NewsHighlight,
     NewsType,
     NewsOrderBy,
-    Locale,
     Region,
     PaginationPageSize,
     PaginatedResponse,
@@ -92,7 +91,7 @@ class TestNewsUnit:
         with patch.object(client, "get", return_value=mock_response_data):
             response = client.news.get_news(
                 locale="en",
-                region=Region.TR,
+                region=Region.US,
                 page=0,
                 page_size=PaginationPageSize.PAGE_SIZE_10,
             )
@@ -161,7 +160,7 @@ class TestNewsUnit:
         with patch.object(client, "get", return_value=mock_response_data):
             response = client.news.get_news(
                 locale="tr",
-                region=Region.TR,
+                region=Region.US,
                 news_type=NewsType.Bloomberg,
                 news_order_by=NewsOrderBy.Timestamp,
                 direction=SortDirection.DESC,
@@ -214,7 +213,7 @@ class TestNewsUnit:
 
         with patch.object(client, "get", return_value=mock_response_data):
             highlights = client.news.get_highlights(
-                locale="tr", region=Region.TR
+                locale="tr", region=Region.US
             )
 
         assert isinstance(highlights, NewsHighlight)
@@ -234,7 +233,7 @@ class TestNewsIntegration:
         """Test real API call for getting news."""
         response = integration_client.news.get_news(
             locale="tr",
-            region=Region.TR,
+            region=Region.US,
             page=0,
             page_size=PaginationPageSize.PAGE_SIZE_10,
         )
@@ -258,7 +257,7 @@ class TestNewsIntegration:
         """Test real API call for getting news with filters."""
         response = integration_client.news.get_news(
             locale="tr",
-            region=Region.TR,
+            region=Region.US,
             news_type=NewsType.Bloomberg,
             news_order_by=NewsOrderBy.Timestamp,
             direction=SortDirection.DESC,
@@ -274,7 +273,7 @@ class TestNewsIntegration:
     def test_real_get_highlights(self, integration_client: LaplaceClient):
         """Test real API call for getting news highlights."""
         highlights = integration_client.news.get_highlights(
-            locale="tr", region=Region.TR
+            locale="tr", region=Region.US
         )
 
         assert isinstance(highlights, NewsHighlight)
