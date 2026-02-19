@@ -301,10 +301,10 @@ class StockHistoricalRatiosDescription(BaseModel):
 
     id: int
     format: str
-    currency: str
+    currency: Currency
     slug: str
-    created_at: str = Field(alias="createdAt")
-    updated_at: str = Field(alias="updatedAt")
+    created_at: datetime = Field(alias="createdAt")
+    updated_at: datetime = Field(alias="updatedAt")
     name: str
     description: str
     locale: Locale
