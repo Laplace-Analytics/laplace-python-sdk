@@ -151,59 +151,6 @@ class TestEarningsIntegration:
         assert transcript.summary is None
         assert transcript.has_summary is False
 
-    @patch("httpx.Client")
-    def test_earnings_transcript_list_field_mapping(self, mock_httpx_client):
-        """Test that field aliases work correctly for earnings transcript list items."""
-        mock_response_data = [
-            {
-                "symbol": "TEST",
-                "year": 2024,
-                "quarter": 1,
-                "fiscal_year": 2024,
-            }
-        ]
-
-        mock_client_instance = Mock()
-        mock_client_instance.get.return_value = MockResponse(mock_response_data)
-        mock_httpx_client.return_value = mock_client_instance
-
-        client = LaplaceClient(api_key="test-key")
-
-        with patch.object(client, "get", return_value=mock_response_data):
-            transcripts = client.earnings.get_transcripts(symbol="TEST", region=Region.US)
-
-        transcript = transcripts[0]
-
-        # Test field aliases work
-        assert transcript.fiscal_year == 2024  # fiscal_year -> fiscal_year (no alias needed)
-
-    @patch("httpx.Client")
-    def test_earnings_transcript_with_summary_field_mapping(self, mock_httpx_client):
-        """Test that field aliases work correctly for earnings transcript with summary."""
-        mock_response_data = {
-            "symbol": "TEST",
-            "year": 2024,
-            "quarter": 1,
-            "content": "Test content",
-            "summary": "Test summary",
-            "has_summary": True,
-        }
-
-        mock_client_instance = Mock()
-        mock_client_instance.get.return_value = MockResponse(mock_response_data)
-        mock_httpx_client.return_value = mock_client_instance
-
-        client = LaplaceClient(api_key="test-key")
-
-        with patch.object(client, "get", return_value=mock_response_data):
-            transcript = client.earnings.get_transcript_with_summary(
-                symbol="TEST", year=2024, quarter=1
-            )
-
-        # Test field aliases work
-        assert transcript.has_summary is True  # has_summary -> has_summary (no alias needed)
-
-
 class TestEarningsRealIntegration:
     """Real integration tests (requires API key)."""
 

@@ -783,7 +783,7 @@ class EarningsTranscriptListItem(BaseModel):
     symbol: str
     year: int
     quarter: int
-    fiscal_year: Optional[int] = Field(alias="fiscal_year", default=None)
+    fiscal_year: int
 
     model_config = {"populate_by_name": True}
 
@@ -796,7 +796,7 @@ class EarningsTranscriptWithSummary(BaseModel):
     quarter: int
     content: str
     summary: Optional[str] = None
-    has_summary: Optional[bool] = Field(alias="has_summary", default=None)
+    has_summary: bool
 
     model_config = {"populate_by_name": True}
 
