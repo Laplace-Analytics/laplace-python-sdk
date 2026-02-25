@@ -22,6 +22,7 @@ class CapitalIncreaseType(str, Enum):
 class PaginationPageSize(int, Enum):
     """Pagination page size options."""
 
+    PAGE_SIZE_5 = 5
     PAGE_SIZE_10 = 10
     PAGE_SIZE_20 = 20
     PAGE_SIZE_50 = 50
@@ -105,6 +106,7 @@ class StockDetail(BaseModel):
     short_description: str = Field(alias="shortDescription")
     localized_description: Dict[str, str] = Field(alias="localized_description")
     localized_short_description: Dict[str, str] = Field(alias="localizedShortDescription")
+    markets: Optional[List[dict]] = None
 
     model_config = {"populate_by_name": True}
 
@@ -113,7 +115,7 @@ class PriceCandle(BaseModel):
     """Individual price candle data."""
 
     close: float = Field(alias="c")
-    date: float = Field(alias="d")
+    date: int = Field(alias="d")
     high: float = Field(alias="h")
     low: float = Field(alias="l")
     open: float = Field(alias="o")
@@ -392,6 +394,8 @@ class USStockLiveData(BaseModel):
 
     symbol: str = Field(alias="s")
     price: float = Field(alias="p")
+    percent_change: float = Field(alias="pc")
+    amount_change: float = Field(alias="ac")
     date: int = Field(alias="d")
 
     model_config = {"populate_by_name": True}
@@ -507,8 +511,8 @@ class TopMover(BaseModel):
 
     change: float
     symbol: str
-    asset_type: AssetType = Field(alias="assetType")
-    asset_class: AssetClass = Field(alias="assetClass")
+    asset_type: Optional[AssetType] = Field(alias="assetType", default=None)
+    asset_class: Optional[AssetClass] = Field(alias="assetClass", default=None)
 
     model_config = {"populate_by_name": True}
 
@@ -552,8 +556,8 @@ class StockStats(BaseModel):
     yearly_return: float = Field(alias="yearlyReturn")
     monthly_return: float = Field(alias="monthlyReturn")
     previous_close: float = Field(alias="previousClose")
-    lower_price_limit: float = Field(alias="lowerPriceLimit")
-    upper_price_limit: float = Field(alias="upperPriceLimit")
+    lower_price_limit: Optional[float] = Field(alias="lowerPriceLimit", default=None)
+    upper_price_limit: Optional[float] = Field(alias="upperPriceLimit", default=None)
 
     model_config = {"populate_by_name": True}
 
@@ -599,7 +603,7 @@ class FundPriceData(BaseModel):
     aum: float
     date: datetime
     price: float
-    share_count: int = Field(alias="shareCount")
+    share_count: float = Field(alias="shareCount")
     investor_count: int = Field(alias="investorCount")
 
     model_config = {"populate_by_name": True}
@@ -741,7 +745,7 @@ class CapitalIncrease(BaseModel):
     rights_last_sell_date: Optional[datetime] = Field(alias="rightsLastSellDate", default=None)
     spk_application_date: Optional[datetime] = Field(alias="spkApplicationDate", default=None)
     related_disclosure_ids: List[int] = Field(alias="relatedDisclosureIds")
-    spk_application_result: List[str] = Field(alias="spkApplicationResult", default=None)
+    spk_application_result: Optional[str] = Field(alias="spkApplicationResult", default=None)
     bonus_dividend_total_amount: str = Field(alias="bonusDividendTotalAmount")
     registered_capital_ceiling: str = Field(alias="registeredCapitalCeiling")
     external_capital_increase_rate: str = Field(alias="externalCapitalIncreaseRate")
@@ -758,6 +762,7 @@ class SearchResultStock(BaseModel):
     title: str
     region: Region
     asset_type: AssetType = Field(alias="assetType")
+    type: Optional[str] = None
 
     model_config = {"populate_by_name": True}
 
