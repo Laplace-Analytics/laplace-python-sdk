@@ -521,6 +521,34 @@ class TestStocksIntegration:
         assert isinstance(r.price_to, float) and r.price_to == 20.0
         assert isinstance(r.tick_size, float) and r.tick_size == 0.01
 
+    def test_get_chart_image(self):
+        """Test getting chart image returns bytes."""
+        mock_png_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00'
+
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "get_bytes", return_value=mock_png_data) as mock_get_bytes:
+            result = client.stocks.get_chart_image(
+                symbol="AKBNK",
+                region=Region.TR,
+                period="1D",
+                resolution="1h",
+                chart_type=0,
+            )
+
+        assert isinstance(result, bytes)
+        assert result == mock_png_data
+        mock_get_bytes.assert_called_once_with(
+            "v1/stock/chart",
+            params={
+                "symbol": "AKBNK",
+                "region": "tr",
+                "period": "1D",
+                "resolution": "1h",
+                "chartType": 0,
+            },
+        )
+
     def test_get_key_insight(self):
         """Test key insights model."""
         mock_response_data = {
@@ -655,7 +683,7 @@ class TestStocksRealIntegration:
             candle = p.one_day[0]
             assert isinstance(candle, PriceCandle)
             assert isinstance(candle.close, float)
-            assert isinstance(candle.date, float)
+            assert isinstance(candle.date, int)
             assert isinstance(candle.high, float)
             assert isinstance(candle.low, float)
             assert isinstance(candle.open, float)
@@ -688,7 +716,7 @@ class TestStocksRealIntegration:
         first_candle = candles[0]
         assert isinstance(first_candle, PriceCandle)
         assert isinstance(first_candle.close, float)
-        assert isinstance(first_candle.date, float)
+        assert isinstance(first_candle.date, int)
         assert isinstance(first_candle.high, float)
         assert isinstance(first_candle.low, float)
         assert isinstance(first_candle.open, float)

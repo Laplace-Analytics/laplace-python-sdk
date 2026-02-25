@@ -163,6 +163,50 @@ class TestBaseClient:
         )
 
     @patch('httpx.Client')
+    def test_get_bytes(self, mock_httpx_client):
+        """Test get_bytes returns raw bytes."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.content = b'\x89PNG\r\n\x1a\n'
+        mock_response.raise_for_status.return_value = None
+
+        mock_client_instance = Mock()
+        mock_client_instance.request.return_value = mock_response
+        mock_httpx_client.return_value = mock_client_instance
+
+        client = BaseClient(api_key="test-key")
+        result = client.get_bytes("test-endpoint", params={"symbol": "AKBNK"})
+
+        assert isinstance(result, bytes)
+        assert result == b'\x89PNG\r\n\x1a\n'
+        mock_client_instance.request.assert_called_once_with(
+            method="GET",
+            url="https://api.finfree.app/api/test-endpoint",
+            params={"symbol": "AKBNK", "api_key": "test-key"},
+        )
+
+    @patch('httpx.Client')
+    def test_get_bytes_error_handling(self, mock_httpx_client):
+        """Test get_bytes error handling."""
+        mock_response = Mock()
+        mock_response.status_code = 404
+        mock_response.reason_phrase = "Not Found"
+        mock_response.json.return_value = {"error": "Not found"}
+
+        http_error = httpx.HTTPStatusError("404 Not Found", request=Mock(), response=mock_response)
+
+        mock_client_instance = Mock()
+        mock_client_instance.request.side_effect = http_error
+        mock_httpx_client.return_value = mock_client_instance
+
+        client = BaseClient(api_key="test-key")
+
+        with pytest.raises(LaplaceAPIError) as exc_info:
+            client.get_bytes("test-endpoint")
+
+        assert exc_info.value.status_code == 404
+
+    @patch('httpx.Client')
     def test_endpoint_path_handling(self, mock_httpx_client):
         """Test endpoint path handling with leading slash."""
         mock_response = Mock()
