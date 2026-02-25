@@ -354,3 +354,38 @@ class StocksClient:
 
         response = self._client.get("v1/key-insights", params=params)
         return KeyInsight(**response)
+
+    def get_chart_image(
+        self,
+        symbol: str,
+        region: Region = Region.TR,
+        period: Optional[str] = None,
+        resolution: Optional[str] = None,
+        indicators: Optional[List[str]] = None,
+        chart_type: Optional[int] = None,
+    ) -> bytes:
+        """Retrieve a chart image (PNG) for a specific stock.
+
+        Args:
+            symbol: Stock symbol (e.g., "AKBNK")
+            region: Region code (default: tr)
+            period: Chart period (1D, 1W, 1M, 3M, 6M, 1Y, 2Y, 3Y, 5Y, All)
+            resolution: Price resolution (1m, 3m, 5m, 15m, 30m, 1h, 2h, 1d, 5d, 7d, 30d)
+            indicators: List of indicator names
+            chart_type: Chart type (0-16, 19)
+
+        Returns:
+            bytes: PNG image data
+        """
+        params = {"symbol": symbol, "region": region.value}
+
+        if period is not None:
+            params["period"] = period
+        if resolution is not None:
+            params["resolution"] = resolution
+        if indicators is not None:
+            params["indicators"] = ",".join(indicators)
+        if chart_type is not None:
+            params["chartType"] = chart_type
+
+        return self._client.get_bytes("v1/stock/chart", params=params)
