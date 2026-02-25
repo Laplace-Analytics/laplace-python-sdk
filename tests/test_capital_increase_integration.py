@@ -293,7 +293,7 @@ class TestCapitalIncreaseIntegration:
         client = LaplaceClient(api_key="test-key")
 
         with patch.object(client, "get", return_value=mock_response_data):
-            response = client.capital_increase.get_active_rights(symbol="AKBNK", region=Region.TR)
+            response = client.capital_increase.get_active_rights(symbol="AKBNK")
 
         # Assertions
         assert isinstance(response, list)
@@ -502,7 +502,7 @@ class TestCapitalIncreaseRealIntegration:
         symbol = "AKBNK"
 
         response = integration_client.capital_increase.get_active_rights(
-            symbol=symbol, region=Region.TR
+            symbol=symbol
         )
         if len(response) == 0:
             return

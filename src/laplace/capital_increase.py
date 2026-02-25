@@ -1,6 +1,7 @@
 """Capital Increase client for Laplace API."""
 
-from typing import List
+from datetime import datetime
+from typing import List, Optional
 from laplace.base import BaseClient
 
 from .models import (
@@ -72,20 +73,20 @@ class CapitalIncreaseClient:
         response = self._client.get(f"v1/capital-increase/{symbol}", params=params)
         return PaginatedResponse[CapitalIncrease](**response)
 
-    def get_active_rights(self, symbol: str, region: Region = Region.TR) -> List[CapitalIncrease]:
+    def get_active_rights(self, symbol: str, date: Optional[datetime] = None) -> List[CapitalIncrease]:
         """Retrieve active rights for a specific stock.
 
         Args:
             symbol: Stock symbol (e.g., "AKBNK")
-            region: Region code (only 'tr' is supported) (default: tr)
+            date: Optional date filter (defaults to today on the server)
 
         Returns:
             List[CapitalIncrease]: Active rights data
         """
-        if region != Region.TR:
-            raise ValueError("Rights endpoint only works with the 'tr' region")
+        params = {}
 
-        params = {"region": region.value}
+        if date is not None:
+            params["date"] = date.strftime("%Y-%m-%d")
 
         response = self._client.get(f"v1/rights/active/{symbol}", params=params)
 
