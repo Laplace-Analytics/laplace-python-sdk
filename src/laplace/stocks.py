@@ -30,11 +30,12 @@ class IntervalPrice(Enum):
     """Interval price options."""
 
     ONE_MINUTE = "1m"
+    THREE_MINUTES = "3m"
     FIVE_MINUTES = "5m"
     FIFTEEN_MINUTES = "15m"
     THIRTY_MINUTES = "30m"
-    ONE_HOUR = "1H"
-    TWO_HOURS = "2H"
+    ONE_HOUR = "1h"
+    TWO_HOURS = "2h"
     ONE_DAY = "1d"
     FIVE_DAYS = "5d"
     SEVEN_DAYS = "7d"
@@ -132,7 +133,7 @@ class StocksClient:
         return StockDetail(**response)
 
     def get_price(
-        self, region: Region, symbols: List[str], keys: Optional[List[str]] = None
+        self, region: Region, symbols: List[str], keys: List[str]
     ) -> List[StockPriceData]:
         """Retrieve the historical price of stocks in a specified region.
 
@@ -140,15 +141,16 @@ class StocksClient:
             region: Region code (tr, us)
             symbols: List of stock symbols
             keys: List of time periods for which data is required.
-                  Allowable values: 1D, 1W, 1M, 3M, 1Y, 5Y (optional)
+                  Allowable values: 1D, 1W, 1M, 3M, 1Y, 5Y
 
         Returns:
             List[StockPriceData]: List of stock price data
         """
-        params = {"region": region.value, "symbols": ",".join(symbols)}
-
-        if keys:
-            params["keys"] = ",".join(keys)
+        params = {
+            "region": region.value,
+            "symbols": ",".join(symbols),
+            "keys": ",".join(keys),
+        }
 
         response = self._client.get("v1/stock/price", params=params)
         return [StockPriceData(**stock_data) for stock_data in response]
