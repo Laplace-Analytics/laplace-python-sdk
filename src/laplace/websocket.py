@@ -31,6 +31,8 @@ class LivePriceFeed(str, Enum):
     LIVE_US = "live_price_us"
     DELAYED_BIST = "delayed_price_tr"
     DEPTH_BIST = "depth_tr"
+    BID_ASK_BIST = "live_ask_bid_price_tr"
+    STATE_US = "state_us"
 
 
 class LogLevel(str, Enum):
