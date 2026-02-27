@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 
 from laplace.base import BaseClient
 
@@ -52,7 +52,7 @@ class NewsClient(BaseClient):
         Returns:
             PaginatedResponse[News]
         """
-        params: dict[str, object] = {
+        params: Dict[str, object] = {
             "locale": locale,
             "region": region.value,
             "page": page,
@@ -85,7 +85,7 @@ class NewsClient(BaseClient):
         Returns:
             NewsHighlight
         """
-        params: dict[str, object] = {
+        params: Dict[str, object] = {
             "locale": locale,
             "region": region.value
         }

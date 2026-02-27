@@ -1,6 +1,6 @@
 """Collections client for Laplace API."""
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from laplace.base import BaseClient
 
@@ -168,10 +168,10 @@ class CollectionsClient:
 
     def create_custom_theme(
         self,
-        title: dict[str, str],
+        title: Dict[str, str],
         stock_ids: List[str],
         status: CollectionStatus,
-        description: Optional[dict[str, str]] = None,
+        description: Optional[Dict[str, str]] = None,
         region: Optional[List[Region]] = None,
         image_url: Optional[str] = None,
         image: Optional[str] = None,
@@ -223,10 +223,10 @@ class CollectionsClient:
     def update_custom_theme(
         self,
         theme_id: str,
-        title: Optional[dict[str, str]] = None,
+        title: Optional[Dict[str, str]] = None,
         stock_ids: Optional[List[str]] = None,
         status: Optional[CollectionStatus] = None,
-        description: Optional[dict[str, str]] = None,
+        description: Optional[Dict[str, str]] = None,
         image_url: Optional[str] = None,
         image: Optional[str] = None,
         avatar_url: Optional[str] = None,
