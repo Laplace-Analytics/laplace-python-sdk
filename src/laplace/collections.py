@@ -157,7 +157,7 @@ class CollectionsClient:
 
         response = self._client.get(f"v1/custom-theme/{theme_id}", params=params)
         return CollectionDetail(**response)
-    
+
     def delete_custom_theme(self, theme_id: str) -> None:
         """Delete specific custom theme.
 
@@ -219,7 +219,6 @@ class CollectionsClient:
 
         response = self._client.post("v1/custom-theme", json=body)
         return response["id"]
-    
 
     def update_custom_theme(
         self,

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from laplace.base import BaseClient
 
@@ -53,7 +53,7 @@ class NewsClient(BaseClient):
             PaginatedResponse[News]
         """
         params: dict[str, object] = {
-            "locale": locale,          
+            "locale": locale,
             "region": region.value,
             "page": page,
             "size": page_size.value,
@@ -70,7 +70,7 @@ class NewsClient(BaseClient):
 
         response = self._client.get("v1/news", params=params)
         return PaginatedResponse[News](**response)
-    
+
     def get_highlights(
         self,
         locale: Locale,
@@ -86,7 +86,7 @@ class NewsClient(BaseClient):
             NewsHighlight
         """
         params: dict[str, object] = {
-            "locale": locale,          
+            "locale": locale,
             "region": region.value
         }
 

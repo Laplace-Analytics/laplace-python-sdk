@@ -6,7 +6,7 @@ import uuid
 from enum import Enum
 from typing import Any, AsyncGenerator, Dict, Generic, Optional, List
 import httpx
-from laplace.websocket import AccessorType, LivePriceFeed
+from laplace.websocket import LivePriceFeed
 from pydantic import BaseModel
 from laplace.models import (
     T,
@@ -398,9 +398,9 @@ class LivePriceClient(BaseClient):
         stream = BidAskStream(self.base_client)
         await stream.subscribe(symbols)
         return stream
-    
+
     def get_websocket_url(
-        self,         
+        self,
         feeds: List[LivePriceFeed],
         external_user_id: str
     ) -> str:
@@ -423,7 +423,7 @@ class LivePriceClient(BaseClient):
         return response["url"]
 
     def get_websocket_usage_for_month(
-        self,         
+        self,
         year: int,
         month: int,
         feed_type: LivePriceFeed
@@ -446,7 +446,6 @@ class LivePriceClient(BaseClient):
         )
 
         return [WebsocketMonthlyUsageDataResponse(**item) for item in response]
-    
 
     def send_websocket_event(
         self,
@@ -470,7 +469,7 @@ class LivePriceClient(BaseClient):
 
         if external_user_id:
             data["externalUserID"] = external_user_id
-            
+
         if transient is not None:
             data["transient"] = transient
 

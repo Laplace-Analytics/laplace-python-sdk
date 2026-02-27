@@ -51,7 +51,7 @@ class FinancialsClient:
 
         if locale:
             params["locale"] = locale
-            
+
         resp = self._client.get("v2/stock/historical-ratios", params=params)
         return [StockHistoricalRatios(**item) for item in resp]
 
