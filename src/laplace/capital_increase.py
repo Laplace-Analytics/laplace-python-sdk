@@ -54,7 +54,7 @@ class CapitalIncreaseClient:
         page: int = 0,
         size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
     ) -> PaginatedResponse[CapitalIncrease]:
-        """Retrieve capital increase information by ID.
+        """Retrieve capital increase information by symbol.
 
         Args:
             symbol: Stock symbol (e.g., "AKBNK")

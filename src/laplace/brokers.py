@@ -118,7 +118,7 @@ class BrokersClient:
             size: Page size (default: 10)
 
         Returns:
-            BrokerStockData: Broker market data
+            BrokerList: Broker market data
         """
         if region != Region.TR:
             raise ValueError("Broker market endpoint only works with the 'tr' region")
@@ -160,7 +160,7 @@ class BrokersClient:
             size: Page size (default: 10)
 
         Returns:
-            BrokerStockData: Stock data for the broker
+            BrokerList: Stock data for the broker
         """
         if region != Region.TR:
             raise ValueError("Broker stock endpoint only works with the 'tr' region")

@@ -179,9 +179,9 @@ class LivePriceStream(Generic[T]):
                 result = LivePriceResult[T](data=model_data)
                 await self._queue.put(result)
 
-            except (json.JSONDecodeError, Exception) as e:
+            except Exception as e:
                 await self._put_error(f"Error processing data: {e}")
-                break  # Stop processing on errors
+                continue
 
     async def _put_error(self, error_message: str) -> None:
         """Put an error result in the queue."""
@@ -303,9 +303,9 @@ class BidAskStream:
                 result = BidAskResult(data=model_data)
                 await self._queue.put(result)
 
-            except (json.JSONDecodeError, Exception) as e:
+            except Exception as e:
                 await self._put_error(f"Error processing bid/ask data: {e}")
-                break  # Stop processing on errors
+                continue
 
     async def _put_error(self, error_message: str) -> None:
         """Put an error result in the queue."""

@@ -33,7 +33,7 @@ class NewsClient:
         news_type: Optional[NewsType] = None,
         news_order_by: Optional[NewsOrderBy] = None,
         direction: Optional[SortDirection] = None,
-        extraFilters: Optional[str] = None,
+        extra_filters: Optional[str] = None,
         page: int = 0,
         page_size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
     ) -> PaginatedResponse[News]:
@@ -45,7 +45,7 @@ class NewsClient:
             news_type: Optional news type filter
             news_order_by: Optional sorting field
             direction: Optional sort direction
-            extraFilters: Optional extra filters (API-specific)
+            extra_filters: Optional extra filters (API-specific)
             page: Page number (default: 0)
             page_size: Page size enum (default: 10)
 
@@ -65,8 +65,8 @@ class NewsClient:
             params["orderBy"] = news_order_by.value
         if direction is not None:
             params["orderByDirection"] = direction.value
-        if extraFilters:
-            params["extraFilters"] = extraFilters
+        if extra_filters:
+            params["extraFilters"] = extra_filters
 
         response = self._client.get("v1/news", params=params)
         return PaginatedResponse[News](**response)
@@ -76,7 +76,7 @@ class NewsClient:
         locale: Locale,
         region: Region
     ) -> NewsHighlight:
-        """Retrieve paginated news.
+        """Retrieve news highlights.
 
         Args:
             locale: Locale code (e.g. "tr", "en")
