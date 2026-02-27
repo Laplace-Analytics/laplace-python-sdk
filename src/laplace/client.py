@@ -1,5 +1,6 @@
 """Main Laplace client."""
 
+from laplace.news import NewsClient
 from .base import BaseClient
 from .brokers import BrokersClient
 from .capital_increase import CapitalIncreaseClient
@@ -19,7 +20,7 @@ from typing import Optional, List
 class LaplaceClient(BaseClient):
     """Main Laplace API client with all sub-clients."""
 
-    def __init__(self, api_key: str, base_url: str = "https://uat.api.finfree.app/api"):
+    def __init__(self, api_key: str, base_url: str = "https://api.finfree.app/api"):
         """Initialize the Laplace client.
 
         Args:
@@ -40,6 +41,7 @@ class LaplaceClient(BaseClient):
         self.earnings = EarningsClient(self)
         self.search = SearchClient(self)
         self.state = StateClient(self)
+        self.news = NewsClient(self)
 
         # WebSocket client will be created on demand
         self._websocket_client: Optional[LivePriceWebSocketClient] = None

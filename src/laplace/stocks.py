@@ -7,6 +7,7 @@ from typing import List, Optional, Union
 from laplace.base import BaseClient
 
 from .models import (
+    AssetType,
     Locale,
     PriceCandle,
     Region,
@@ -29,11 +30,12 @@ class IntervalPrice(Enum):
     """Interval price options."""
 
     ONE_MINUTE = "1m"
+    THREE_MINUTES = "3m"
     FIVE_MINUTES = "5m"
     FIFTEEN_MINUTES = "15m"
     THIRTY_MINUTES = "30m"
-    ONE_HOUR = "1H"
-    TWO_HOURS = "2H"
+    ONE_HOUR = "1h"
+    TWO_HOURS = "2h"
     ONE_DAY = "1d"
     FIVE_DAYS = "5d"
     SEVEN_DAYS = "7d"
@@ -131,7 +133,7 @@ class StocksClient:
         return StockDetail(**response)
 
     def get_price(
-        self, region: Region, symbols: List[str], keys: Optional[List[str]] = None
+        self, region: Region, symbols: List[str], keys: List[str]
     ) -> List[StockPriceData]:
         """Retrieve the historical price of stocks in a specified region.
 
@@ -139,15 +141,16 @@ class StocksClient:
             region: Region code (tr, us)
             symbols: List of stock symbols
             keys: List of time periods for which data is required.
-                  Allowable values: 1D, 1W, 1M, 3M, 1Y, 5Y (optional)
+                  Allowable values: 1D, 1W, 1M, 3M, 1Y, 5Y
 
         Returns:
             List[StockPriceData]: List of stock price data
         """
-        params = {"region": region.value, "symbols": ",".join(symbols)}
-
-        if keys:
-            params["keys"] = ",".join(keys)
+        params = {
+            "region": region.value,
+            "symbols": ",".join(symbols),
+            "keys": ",".join(keys),
+        }
 
         response = self._client.get("v1/stock/price", params=params)
         return [StockPriceData(**stock_data) for stock_data in response]
@@ -159,6 +162,8 @@ class StocksClient:
         from_date: datetime,
         to_date: datetime,
         interval: Union[IntervalPrice, str],
+        detail: bool = False,
+        num_intervals: Optional[int] = None
     ) -> List[PriceCandle]:
         """Retrieve the historical price of a stock with custom date range and interval.
 
@@ -180,12 +185,16 @@ class StocksClient:
             "fromDate": self._format_datetime(from_date),
             "toDate": self._format_datetime(to_date),
             "interval": interval_value,
+            "detail": detail
         }
+
+        if num_intervals:
+            params["numIntervals"] = num_intervals
 
         response = self._client.get("v1/stock/price/interval", params=params)
         return [PriceCandle(**candle) for candle in response]
 
-    def get_tick_rules(self, region: Region = Region.TR) -> StockRules:
+    def get_tick_rules(self, symbol: str, region: Region = Region.TR) -> StockRules:
         """Retrieve the tick rules for creating orderbook and price limits.
 
         Note: This endpoint only works with the "tr" region.
@@ -199,11 +208,11 @@ class StocksClient:
         if region != Region.TR:
             raise ValueError("Tick rules endpoint only works with the 'tr' region")
 
-        params = {"region": region.value}
+        params = {"region": region.value, "symbol": symbol}
         response = self._client.get("v1/stock/rules", params=params)
         return StockRules(**response)
 
-    def get_restrictions(self, region: Region = Region.TR) -> List[StockRestriction]:
+    def get_restrictions(self, symbol, region: Region = Region.TR) -> List[StockRestriction]:
         """Retrieve the restrictions for a stock.
 
         Note: This endpoint only works with the "tr" region.
@@ -217,7 +226,7 @@ class StocksClient:
         if region != Region.TR:
             raise ValueError("Restrictions endpoint only works with the 'tr' region")
 
-        params = {"region": region.value}
+        params = {"region": region.value, "symbol": symbol}
         response = self._client.get("v1/stock/restrictions", params=params)
         return [StockRestriction(**restriction) for restriction in response]
 
@@ -243,6 +252,8 @@ class StocksClient:
         self,
         region: Region,
         direction: str = "gainers",
+        asset_type: AssetType = AssetType.STOCK,
+        asset_class: AssetClass = AssetClass.EQUITY,
         page: int = 0,
         page_size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
     ) -> List[TopMover]:
@@ -262,6 +273,8 @@ class StocksClient:
             "direction": direction,
             "page": page,
             "pageSize": page_size.value,
+            "assetType": asset_type.value,
+            "assetClass": asset_class.value
         }
 
         response = self._client.get("v2/stock/top-movers", params=params)
@@ -341,5 +354,40 @@ class StocksClient:
         """
         params = {"symbol": symbol, "region": region.value}
 
-        response = self._client.get("v1/key-insight", params=params)
+        response = self._client.get("v1/key-insights", params=params)
         return KeyInsight(**response)
+
+    def get_chart_image(
+        self,
+        symbol: str,
+        region: Region = Region.TR,
+        period: Optional[str] = None,
+        resolution: Optional[str] = None,
+        indicators: Optional[List[str]] = None,
+        chart_type: Optional[int] = None,
+    ) -> bytes:
+        """Retrieve a chart image (PNG) for a specific stock.
+
+        Args:
+            symbol: Stock symbol (e.g., "AKBNK")
+            region: Region code (default: tr)
+            period: Chart period (1D, 1W, 1M, 3M, 6M, 1Y, 2Y, 3Y, 5Y, All)
+            resolution: Price resolution (1m, 3m, 5m, 15m, 30m, 1h, 2h, 1d, 5d, 7d, 30d)
+            indicators: List of indicator names
+            chart_type: Chart type (0-16, 19)
+
+        Returns:
+            bytes: PNG image data
+        """
+        params = {"symbol": symbol, "region": region.value}
+
+        if period is not None:
+            params["period"] = period
+        if resolution is not None:
+            params["resolution"] = resolution
+        if indicators is not None:
+            params["indicators"] = ",".join(indicators)
+        if chart_type is not None:
+            params["chartType"] = chart_type
+
+        return self._client.get_bytes("v1/stock/chart", params=params)

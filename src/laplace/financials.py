@@ -1,6 +1,6 @@
 """Financials client for Laplace API."""
 
-from typing import List
+from typing import List, Optional
 
 from laplace.base import BaseClient
 
@@ -41,14 +41,17 @@ class FinancialsClient:
         return [StockPeerFinancialRatioComparison(**item) for item in resp]
 
     def get_historical_ratios(
-        self, symbol: str, keys: List[str], region: Region, locale: Locale
+        self, symbol: str, keys: List[str], region: Region, locale: Optional[Locale] = None
     ) -> List[StockHistoricalRatios]:
         params = {
             "symbol": symbol,
             "region": region.value,
-            "locale": locale,
             "slugs": ",".join(keys),
         }
+
+        if locale:
+            params["locale"] = locale
+
         resp = self._client.get("v2/stock/historical-ratios", params=params)
         return [StockHistoricalRatios(**item) for item in resp]
 

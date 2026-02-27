@@ -1,16 +1,17 @@
 """Brokers client for Laplace API."""
 
 from datetime import datetime
+from typing import Optional
 
 from laplace.base import BaseClient
 
 from .models import (
+    AssetClass,
     Broker,
+    BrokerList,
     PaginationPageSize,
     Region,
-    BrokerMarketData,
-    BrokerStockData,
-    BrokerSortDirection,
+    SortDirection,
     BrokerSort,
     PaginatedResponse,
 )
@@ -32,6 +33,7 @@ class BrokersClient:
         region: Region = Region.TR,
         page: int = 0,
         size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
+        asset_class: Optional[AssetClass] = None
     ) -> PaginatedResponse[Broker]:
         """Retrieve all brokers.
 
@@ -47,6 +49,9 @@ class BrokersClient:
 
         params = {"region": region.value, "page": page, "size": size.value}
 
+        if asset_class:
+            params["assetClass"] = asset_class.value
+
         response = self._client.get("v1/brokers", params=params)
         return PaginatedResponse[Broker](**response)
 
@@ -55,12 +60,12 @@ class BrokersClient:
         symbol: str,
         region: Region,
         sort_by: BrokerSort,
-        sort_direction: BrokerSortDirection,
+        sort_direction: SortDirection,
         from_date: datetime,
         to_date: datetime,
         page: int = 0,
         size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
-    ) -> BrokerStockData:
+    ) -> BrokerList:
         """Retrieve broker information by symbol.
 
         Args:
@@ -73,7 +78,7 @@ class BrokersClient:
             page: Page number (default: 0)
             size: Page size (default: 10)
         Returns:
-            BrokerStockData: Broker information
+            BrokerList: Broker information
         """
         if region != Region.TR:
             raise ValueError("Broker endpoint only works with the 'tr' region")
@@ -89,18 +94,18 @@ class BrokersClient:
         }
 
         response = self._client.get(f"v1/brokers/stock/{symbol}", params=params)
-        return BrokerStockData(**response)
+        return BrokerList(**response)
 
     def get_broker_list_for_market(
         self,
         region: Region,
         sort_by: BrokerSort,
-        sort_direction: BrokerSortDirection,
+        sort_direction: SortDirection,
         from_date: datetime,
         to_date: datetime,
         page: int = 0,
         size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
-    ) -> BrokerMarketData:
+    ) -> BrokerList:
         """Retrieve broker market data.
 
         Args:
@@ -113,7 +118,7 @@ class BrokersClient:
             size: Page size (default: 10)
 
         Returns:
-            BrokerStockData: Broker market data
+            BrokerList: Broker market data
         """
         if region != Region.TR:
             raise ValueError("Broker market endpoint only works with the 'tr' region")
@@ -129,19 +134,19 @@ class BrokersClient:
         }
 
         response = self._client.get("v1/brokers/market", params=params)
-        return BrokerMarketData(**response)
+        return BrokerList(**response)
 
     def get_broker_list_for_stock(
         self,
         symbol: str,
         region: Region,
         sort_by: BrokerSort,
-        sort_direction: BrokerSortDirection,
+        sort_direction: SortDirection,
         from_date: datetime,
         to_date: datetime,
         page: int = 0,
         size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
-    ) -> BrokerMarketData:
+    ) -> BrokerList:
         """Retrieve stock data for a specific broker.
 
         Args:
@@ -155,7 +160,7 @@ class BrokersClient:
             size: Page size (default: 10)
 
         Returns:
-            BrokerStockData: Stock data for the broker
+            BrokerList: Stock data for the broker
         """
         if region != Region.TR:
             raise ValueError("Broker stock endpoint only works with the 'tr' region")
@@ -171,18 +176,18 @@ class BrokersClient:
         }
 
         response = self._client.get(f"v1/brokers/{symbol}", params=params)
-        return BrokerMarketData(**response)
+        return BrokerList(**response)
 
     def get_stock_list_for_market(
         self,
         region: Region,
         sort_by: BrokerSort,
-        sort_direction: BrokerSortDirection,
+        sort_direction: SortDirection,
         from_date: datetime,
         to_date: datetime,
         page: int = 0,
         size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
-    ) -> BrokerStockData:
+    ) -> BrokerList:
         """Retrieve market stock data for brokers.
 
         Args:
@@ -195,7 +200,7 @@ class BrokersClient:
             size: Page size (default: 10)
 
         Returns:
-            BrokerStockData: Market stock data for brokers
+            BrokerList: Market stock data for brokers
         """
         if region != Region.TR:
             raise ValueError("Broker market stock endpoint only works with the 'tr' region")
@@ -211,4 +216,4 @@ class BrokersClient:
         }
 
         response = self._client.get("v1/brokers/market/stock", params=params)
-        return BrokerStockData(**response)
+        return BrokerList(**response)

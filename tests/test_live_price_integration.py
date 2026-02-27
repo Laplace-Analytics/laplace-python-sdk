@@ -1,12 +1,110 @@
 """Integration tests for live price client."""
 
+from datetime import datetime
 import os
 import asyncio
+from unittest.mock import Mock, patch
+from laplace.websocket import LivePriceFeed
 import pytest
 
 from laplace.client import LaplaceClient
+from laplace.live_price import LivePriceClient
 from laplace.live_price import BISTStockLiveData, USStockLiveData, BidAskResult
-from laplace.models import BISTBidAskData
+from laplace.models import BISTBidAskData, WebsocketMonthlyUsageDataResponse
+
+
+class TestLivePriceUnit:
+    """Unit tests for live price client."""
+
+    @patch("httpx.Client")
+    def test_get_websocket_url_endpoint(self, mock_httpx_client):
+        """Test that get_websocket_url calls the correct endpoint."""
+        mock_client_instance = Mock()
+        mock_httpx_client.return_value = mock_client_instance
+
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "post", return_value={"url": "wss://example.com/ws/123"}) as mock_post:
+            url = client.live_price.get_websocket_url(
+                feeds=[LivePriceFeed.LIVE_BIST],
+                external_user_id="test-user",
+            )
+
+        mock_post.assert_called_once_with(
+            "v2/ws/url",
+            json={"externalUserId": "test-user", "feeds": ["live_price_tr"]},
+        )
+        assert url == "wss://example.com/ws/123"
+
+    @patch("httpx.Client")
+    def test_get_websocket_usage_endpoint(self, mock_httpx_client):
+        """Test that get_websocket_usage_for_month calls the correct endpoint."""
+        mock_client_instance = Mock()
+        mock_httpx_client.return_value = mock_client_instance
+
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "get", return_value=[]) as mock_get:
+            client.live_price.get_websocket_usage_for_month(
+                year=2025, month=7, feed_type=LivePriceFeed.LIVE_BIST
+            )
+
+        mock_get.assert_called_once_with(
+            "v1/ws/report",
+            params={"year": 2025, "month": 7, "feedType": "live_price_tr"},
+        )
+
+    @patch("httpx.Client")
+    def test_send_websocket_event_endpoint(self, mock_httpx_client):
+        """Test that send_websocket_event calls the correct endpoint."""
+        mock_client_instance = Mock()
+        mock_httpx_client.return_value = mock_client_instance
+
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "post", return_value={}) as mock_post:
+            client.live_price.send_websocket_event(
+                event={"type": "test"},
+                external_user_id="user-123",
+            )
+
+        mock_post.assert_called_once_with(
+            "v1/ws/event",
+            json={
+                "event": {"type": "test"},
+                "broadCastToAll": False,
+                "externalUserID": "user-123",
+            },
+        )
+
+    @patch("httpx.Client")
+    def test_send_websocket_event_requires_event(self, mock_httpx_client):
+        """Test that send_websocket_event raises on empty event."""
+        mock_client_instance = Mock()
+        mock_httpx_client.return_value = mock_client_instance
+
+        client = LaplaceClient(api_key="test-key")
+
+        with pytest.raises(ValueError, match="event"):
+            client.live_price.send_websocket_event(event={})
+
+    @patch("httpx.Client")
+    def test_send_websocket_event_requires_user_id_when_not_broadcast(self, mock_httpx_client):
+        """Test that send_websocket_event raises when no user_id and not broadcast."""
+        mock_client_instance = Mock()
+        mock_httpx_client.return_value = mock_client_instance
+
+        client = LaplaceClient(api_key="test-key")
+
+        with pytest.raises(ValueError, match="external_user_id"):
+            client.live_price.send_websocket_event(
+                event={"type": "test"}, broadcast_to_all=False
+            )
+
+    def test_live_price_client_does_not_inherit_base_client(self):
+        """Test that LivePriceClient uses composition, not inheritance."""
+        from laplace.base import BaseClient
+        assert not issubclass(LivePriceClient, BaseClient)
 
 
 class TestLivePriceIntegration:
@@ -465,3 +563,27 @@ class TestLivePriceIntegration:
         # Note: This test mainly verifies that the stream can handle invalid symbols
         # without crashing. The exact behavior may vary based on API implementation.
         print("✅ Error handling test completed without crashes")
+
+    @pytest.mark.integration
+    def test_real_get_websocket_usage_for_month(self, integration_client: LaplaceClient):
+        usage = integration_client.live_price.get_websocket_usage_for_month(
+            year=2025, month=7, feed_type=LivePriceFeed.LIVE_BIST
+        )
+
+        assert isinstance(usage, list)
+        assert all(isinstance(item, WebsocketMonthlyUsageDataResponse) for item in usage)
+        if usage:
+            assert usage[0].external_user_id is not None
+            assert isinstance(usage[0].first_connection_time, datetime)
+            assert usage[0].unique_device_count >= 0
+
+    @pytest.mark.integration
+    def test_real_get_websocket_url(self, integration_client: LaplaceClient):
+        """Test real API call for getting WebSocket URL."""
+        url = integration_client.live_price.get_websocket_url(
+            feeds=[LivePriceFeed.LIVE_BIST],
+            external_user_id="test-user-123",
+        )
+
+        assert isinstance(url, str)
+        assert url.startswith("wss://") or url.startswith("ws://")

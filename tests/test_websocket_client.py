@@ -82,10 +82,12 @@ class TestWebSocketClient:
 
     def test_us_stock_live_data(self) -> None:
         """Test US stock live data model."""
-        data = USStockLiveData(symbol="AAPL", price=150.75, date=1234567890)
+        data = USStockLiveData(symbol="AAPL", price=150.75, date=1234567890, pc=1.25, ac=0.85)
         assert data.symbol == "AAPL"
         assert data.price == 150.75
         assert data.date == 1234567890
+        assert data.percent_change == 1.25
+        assert data.amount_change == 0.85
 
     def test_websocket_error(self) -> None:
         """Test WebSocket error creation."""
@@ -133,7 +135,7 @@ class TestWebSocketClient:
         client = LivePriceWebSocketClient(feeds=[], external_user_id="", api_key="test-key")
 
         with pytest.raises(WebSocketError, match="External user ID and feeds are required"):
-            await client.connect()
+            await client.connect(url="")
 
     @pytest.mark.asyncio
     async def test_subscribe_and_unsubscribe(
@@ -219,7 +221,7 @@ class TestWebSocketClient:
             {
                 "type": "data",
                 "feed": "live_price_us",
-                "message": {"s": "AAPL", "p": 150.75, "t": 1234567890},
+                "message": {"s": "AAPL", "p": 150.75, "t": 1234567890, "pc": 1.25, "ac": 0.85},
             }
         )
 

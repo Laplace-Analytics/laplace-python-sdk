@@ -4,8 +4,9 @@ import asyncio
 import json
 import uuid
 from enum import Enum
-from typing import AsyncGenerator, Generic, Optional, List
+from typing import Any, AsyncGenerator, Dict, Generic, Optional, List
 import httpx
+from laplace.websocket import LivePriceFeed
 from pydantic import BaseModel
 from laplace.models import (
     T,
@@ -15,6 +16,7 @@ from laplace.models import (
     BISTStockLiveData,
     USStockLiveData,
     BISTBidAskData,
+    WebsocketMonthlyUsageDataResponse,
 )
 from laplace.base import BaseClient
 BidAskData = BISTBidAskData
@@ -177,9 +179,9 @@ class LivePriceStream(Generic[T]):
                 result = LivePriceResult[T](data=model_data)
                 await self._queue.put(result)
 
-            except (json.JSONDecodeError, Exception) as e:
+            except Exception as e:
                 await self._put_error(f"Error processing data: {e}")
-                break  # Stop processing on errors
+                continue
 
     async def _put_error(self, error_message: str) -> None:
         """Put an error result in the queue."""
@@ -191,7 +193,7 @@ class LivePriceStream(Generic[T]):
 class BidAskStream:
     """Handles bid/ask price streaming for Turkish (BIST) stocks."""
 
-    def __init__(self, base_client):
+    def __init__(self, base_client: BaseClient):
         self.base_client = base_client
         self._task: Optional[asyncio.Task] = None
         self._queue: Optional[asyncio.Queue] = None
@@ -301,9 +303,9 @@ class BidAskStream:
                 result = BidAskResult(data=model_data)
                 await self._queue.put(result)
 
-            except (json.JSONDecodeError, Exception) as e:
+            except Exception as e:
                 await self._put_error(f"Error processing bid/ask data: {e}")
-                break  # Stop processing on errors
+                continue
 
     async def _put_error(self, error_message: str) -> None:
         """Put an error result in the queue."""
@@ -315,7 +317,7 @@ class BidAskStream:
 class LivePriceClient:
     """Main client for live price functionality."""
 
-    def __init__(self, base_client):
+    def __init__(self, base_client: BaseClient):
         self.base_client = base_client
 
     async def get_live_price_for_bist(
@@ -396,3 +398,79 @@ class LivePriceClient:
         stream = BidAskStream(self.base_client)
         await stream.subscribe(symbols)
         return stream
+
+    def get_websocket_url(
+        self,
+        feeds: List[LivePriceFeed],
+        external_user_id: str
+    ) -> str:
+        """Get WebSocket URL from the API.
+
+        Returns:
+            WebSocket URL
+        """
+
+        feed_values = [feed.value for feed in feeds]
+
+        response = self.base_client.post(
+            "v2/ws/url",
+            json={
+                "externalUserId": external_user_id,
+                "feeds": feed_values,
+            },
+        )
+
+        return response["url"]
+
+    def get_websocket_usage_for_month(
+        self,
+        year: int,
+        month: int,
+        feed_type: LivePriceFeed
+    ) -> List[WebsocketMonthlyUsageDataResponse]:
+        """Get WebSocket Monthly Usage Data from the API.
+
+        Returns:
+            List[WebsocketMonthlyUsageDataResponse]
+        """
+
+        params = {
+            "year": year,
+            "month": month,
+            "feedType": feed_type.value,
+        }
+
+        response = self.base_client.get(
+            "v1/ws/report",
+            params=params,
+        )
+
+        return [WebsocketMonthlyUsageDataResponse(**item) for item in response]
+
+    def send_websocket_event(
+        self,
+        event: Dict[str, Any],
+        external_user_id: Optional[str] = None,
+        transient: Optional[bool] = None,
+        broadcast_to_all: bool = False
+    ) -> None:
+        if not event:
+            raise ValueError("The 'event' field is required.")
+
+        if not broadcast_to_all and not external_user_id:
+            raise ValueError(
+                "external_user_id is required when broadcast_to_all is False."
+            )
+
+        data = {
+            "event": event,
+            "broadCastToAll": broadcast_to_all
+        }
+
+        if external_user_id:
+            data["externalUserID"] = external_user_id
+
+        if transient is not None:
+            data["transient"] = transient
+
+        self.base_client.post("v1/ws/event", json=data)

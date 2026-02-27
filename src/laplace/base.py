@@ -39,7 +39,7 @@ class BaseClient:
         self.base_url = base_url.rstrip("/")
         self._client = httpx.Client(
             headers={
-                "User-Agent": "laplace-python-sdk/0.1.0",
+                "User-Agent": "laplace-python-sdk/1.0.0",
             },
             timeout=30.0,
         )
@@ -119,3 +119,33 @@ class BaseClient:
     def delete(self, endpoint: str) -> Dict[str, Any]:
         """Make a DELETE request."""
         return self._request("DELETE", endpoint)
+
+    def patch(self, endpoint: str, json: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Make a PATCH request."""
+        return self._request("PATCH", endpoint, json=json)
+
+    def get_bytes(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> bytes:
+        """Make a GET request and return raw bytes."""
+        url = f"{self.base_url}/{endpoint.lstrip('/')}"
+
+        if params is None:
+            params = {}
+        params["api_key"] = self.api_key
+
+        try:
+            response = self._client.request(method="GET", url=url, params=params)
+            response.raise_for_status()
+            return response.content
+        except httpx.HTTPStatusError as e:
+            try:
+                error_data = e.response.json()
+            except Exception:
+                error_data = {"error": e.response.text}
+
+            raise LaplaceAPIError(
+                message=f"API request failed: {e.response.status_code} {e.response.reason_phrase}",
+                status_code=e.response.status_code,
+                response=error_data,
+            ) from e
+        except httpx.RequestError as e:
+            raise LaplaceAPIError(f"Request failed: {str(e)}") from e

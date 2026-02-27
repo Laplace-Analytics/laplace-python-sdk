@@ -22,6 +22,7 @@ class CapitalIncreaseType(str, Enum):
 class PaginationPageSize(int, Enum):
     """Pagination page size options."""
 
+    PAGE_SIZE_5 = 5
     PAGE_SIZE_10 = 10
     PAGE_SIZE_20 = 20
     PAGE_SIZE_50 = 50
@@ -68,6 +69,10 @@ Locale = Literal[
     "en",
 ]
 
+class CollectionStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+
 
 class Stock(BaseModel):
     """Stock model from the stocks API."""
@@ -101,6 +106,7 @@ class StockDetail(BaseModel):
     short_description: str = Field(alias="shortDescription")
     localized_description: Dict[str, str] = Field(alias="localized_description")
     localized_short_description: Dict[str, str] = Field(alias="localizedShortDescription")
+    markets: Optional[List[dict]] = None
 
     model_config = {"populate_by_name": True}
 
@@ -109,10 +115,18 @@ class PriceCandle(BaseModel):
     """Individual price candle data."""
 
     close: float = Field(alias="c")
-    date: float = Field(alias="d")
+    date: int = Field(alias="d")
     high: float = Field(alias="h")
     low: float = Field(alias="l")
     open: float = Field(alias="o")
+
+    unadjusted_open: Optional[float] = Field(default=None, alias="uo")
+    unadjusted_high: Optional[float] = Field(default=None, alias="uh")
+    unadjusted_low: Optional[float] = Field(default=None, alias="ul")
+    unadjusted_close: Optional[float] = Field(default=None, alias="uc")
+
+    volume: Optional[float] = Field(default=None, alias="v")
+    unadjusted_volume: Optional[float] = Field(default=None, alias="uv")
 
 
 class StockPriceData(BaseModel):
@@ -168,128 +182,44 @@ class StockRestriction(BaseModel):
 
 
 class CollectionStock(BaseModel):
-    """Stock information within a collection."""
-
     id: str
+    asset_type: str = Field(alias="assetType")
     name: str
     symbol: str
     sector_id: str = Field(alias="sectorId")
-    asset_type: AssetType = Field(alias="assetType")
     industry_id: str = Field(alias="industryId")
+    updated_date: datetime = Field(alias="updatedDate")
+    daily_change: Optional[float] = Field(alias="dailyChange", default=None)
+    active: bool
 
     model_config = {"populate_by_name": True}
 
 
 class Collection(BaseModel):
-    """Collection model."""
-
     id: str
     title: str
-    region: List[Region]
+    region: Optional[List[str]] = None
     image_url: str = Field(alias="imageUrl")
     avatar_url: str = Field(alias="avatarUrl")
     num_stocks: int = Field(alias="numStocks")
-    asset_class: AssetClass = Field(alias="assetClass")
+    asset_class: Optional[str] = Field(alias="assetClass", default=None)
+
+    # Custom theme fields
+    description: Optional[str] = None
+    image: Optional[str] = None
+    order: Optional[int] = None
+    status: Optional[str] = None
+    meta_data: Optional[dict] = Field(alias="metaData", default=None)
 
     model_config = {"populate_by_name": True}
 
 
-class CollectionDetail(BaseModel):
+class CollectionDetail(Collection):
     """Detailed collection information."""
 
-    id: str
-    title: str
-    region: List[Region]
-    stocks: List[CollectionStock]
-    image_url: str = Field(alias="imageUrl")
-    avatar_url: str = Field(alias="avatarUrl")
-    num_stocks: int = Field(alias="numStocks")
-    asset_class: AssetClass = Field(alias="assetClass")
-
-    model_config = {"populate_by_name": True}
-
-
-class Theme(BaseModel):
-    """Theme model."""
-
-    id: str
-    title: str
-    region: List[Region]
-    image_url: str = Field(alias="imageUrl")
-    avatar_url: str = Field(alias="avatarUrl")
-    num_stocks: int = Field(alias="numStocks")
-    asset_class: AssetClass = Field(alias="assetClass")
-
-    model_config = {"populate_by_name": True}
-
-
-class ThemeDetail(BaseModel):
-    """Detailed theme information."""
-
-    id: str
-    title: str
-    region: List[Region]
-    stocks: List[CollectionStock]
-    image_url: str = Field(alias="imageUrl")
-    avatar_url: str = Field(alias="avatarUrl")
-    num_stocks: int = Field(alias="numStocks")
-    asset_class: AssetClass = Field(alias="assetClass")
-
-    model_config = {"populate_by_name": True}
-
-
-class Industry(BaseModel):
-    """Industry model."""
-
-    id: str
-    title: str
-    image_url: str = Field(alias="imageUrl")
-    avatar_url: str = Field(alias="avatarUrl")
-    num_stocks: int = Field(alias="numStocks")
-
-    model_config = {"populate_by_name": True}
-
-
-class IndustryDetail(BaseModel):
-    """Detailed industry information."""
-
-    id: str
-    title: str
-    region: List[Region]
-    stocks: List[CollectionStock]
-    image_url: str = Field(alias="imageUrl")
-    avatar_url: str = Field(alias="avatarUrl")
-    num_stocks: int = Field(alias="numStocks")
     stocks: List[CollectionStock]
 
     model_config = {"populate_by_name": True}
-
-
-class Sector(BaseModel):
-    """Sector model."""
-
-    id: str
-    title: str
-    image_url: str = Field(alias="imageUrl")
-    avatar_url: str = Field(alias="avatarUrl")
-    num_stocks: int = Field(alias="numStocks")
-
-    model_config = {"populate_by_name": True}
-
-
-class SectorDetail(BaseModel):
-    """Detailed sector information."""
-
-    id: str
-    title: str
-    region: List[Region]
-    stocks: List[CollectionStock]
-    image_url: str = Field(alias="imageUrl")
-    avatar_url: str = Field(alias="avatarUrl")
-    num_stocks: int = Field(alias="numStocks")
-
-    model_config = {"populate_by_name": True}
-
 
 class RatioComparisonPeerType(str, Enum):
     """Peer type for ratio comparison."""
@@ -381,10 +311,10 @@ class StockHistoricalRatiosDescription(BaseModel):
 
     id: int
     format: str
-    currency: str
+    currency: Currency
     slug: str
-    created_at: str = Field(alias="createdAt")
-    updated_at: str = Field(alias="updatedAt")
+    created_at: datetime = Field(alias="createdAt")
+    updated_at: datetime = Field(alias="updatedAt")
     name: str
     description: str
     locale: Locale
@@ -464,6 +394,8 @@ class USStockLiveData(BaseModel):
 
     symbol: str = Field(alias="s")
     price: float = Field(alias="p")
+    percent_change: float = Field(alias="pc")
+    amount_change: float = Field(alias="ac")
     date: int = Field(alias="d")
 
     model_config = {"populate_by_name": True}
@@ -579,8 +511,8 @@ class TopMover(BaseModel):
 
     change: float
     symbol: str
-    asset_type: AssetType = Field(alias="assetType")
-    asset_class: AssetClass = Field(alias="assetClass")
+    asset_type: Optional[AssetType] = Field(alias="assetType", default=None)
+    asset_class: Optional[AssetClass] = Field(alias="assetClass", default=None)
 
     model_config = {"populate_by_name": True}
 
@@ -589,6 +521,7 @@ class Dividend(BaseModel):
     """Stock dividend model."""
 
     date: datetime
+    currency: Currency
     net_ratio: float = Field(alias="netRatio")
     net_amount: float = Field(alias="netAmount")
     price_then: float = Field(alias="priceThen")
@@ -603,7 +536,7 @@ class Dividend(BaseModel):
 class StockStats(BaseModel):
     """Stock statistics model."""
 
-    eps: float
+    eps: Optional[float] = None
     day_low: float = Field(alias="dayLow")
     symbol: str
     day_high: float = Field(alias="dayHigh")
@@ -616,14 +549,15 @@ class StockStats(BaseModel):
     ytd_return: float = Field(alias="ytdReturn")
     three_year_return: float = Field(alias="3YearReturn")
     five_year_return: float = Field(alias="5YearReturn")
+    daily_change: float = Field(alias="dailyChange")
     latest_price: float = Field(alias="latestPrice")
     three_month_return: float = Field(alias="3MonthReturn")
     weekly_return: float = Field(alias="weeklyReturn")
     yearly_return: float = Field(alias="yearlyReturn")
     monthly_return: float = Field(alias="monthlyReturn")
     previous_close: float = Field(alias="previousClose")
-    lower_price_limit: float = Field(alias="lowerPriceLimit")
-    upper_price_limit: float = Field(alias="upperPriceLimit")
+    lower_price_limit: Optional[float] = Field(alias="lowerPriceLimit", default=None)
+    upper_price_limit: Optional[float] = Field(alias="upperPriceLimit", default=None)
 
     model_config = {"populate_by_name": True}
 
@@ -641,7 +575,7 @@ class KeyInsight(BaseModel):
     """Key insight model."""
 
     symbol: str
-    insights: str
+    insight: str
 
     model_config = {"populate_by_name": True}
 
@@ -669,7 +603,7 @@ class FundPriceData(BaseModel):
     aum: float
     date: datetime
     price: float
-    share_count: int = Field(alias="shareCount")
+    share_count: float = Field(alias="shareCount")
     investor_count: int = Field(alias="investorCount")
 
     model_config = {"populate_by_name": True}
@@ -727,85 +661,49 @@ class Broker(BaseModel):
     name: str
     symbol: str
     long_name: str = Field(alias="longName")
+    supported_asset_classes: Optional[List[AssetClass]] =  Field(alias="supportedAssetClasses", default=None)
 
     model_config = {"populate_by_name": True}
 
-
-class BrokerTradingData(BaseModel):
-    """Broker trading data model."""
-
-    broker: Broker
-    net_amount: float = Field(alias="netAmount")
-    total_amount: float = Field(alias="totalAmount")
-    total_volume: int = Field(alias="totalVolume")
-    total_buy_amount: float = Field(alias="totalBuyAmount")
-    total_buy_volume: int = Field(alias="totalBuyVolume")
-    total_sell_amount: float = Field(alias="totalSellAmount")
-    total_sell_volume: int = Field(alias="totalSellVolume")
-
-    model_config = {"populate_by_name": True}
-
-
-class BrokerTotalStats(BaseModel):
-    """Broker total statistics model."""
-
-    net_amount: float = Field(alias="netAmount")
-    total_amount: float = Field(alias="totalAmount")
-    total_volume: int = Field(alias="totalVolume")
-    total_buy_amount: float = Field(alias="totalBuyAmount")
-    total_buy_volume: int = Field(alias="totalBuyVolume")
-    total_sell_amount: float = Field(alias="totalSellAmount")
-    total_sell_volume: int = Field(alias="totalSellVolume")
-
-    model_config = {"populate_by_name": True}
-
-
-class BrokerMarketData(BaseModel):
-    """Broker market data model."""
-
-    items: List[BrokerTradingData]
-    total_stats: BrokerTotalStats = Field(alias="totalStats")
-    record_count: int = Field(alias="recordCount")
-
-    model_config = {"populate_by_name": True}
-
-
-class StockInfo(BaseModel):
-    """Stock information model."""
-
+class BrokerStock(BaseModel):
     id: str
-    name: str
     symbol: str
-    asset_type: AssetType = Field(alias="assetType")
-    asset_class: AssetClass = Field(alias="assetClass")
+    name: str
+    asset_type: str = Field(alias="assetType")
+    asset_class: str = Field(alias="assetClass")
+    logo_url: Optional[str] = Field(alias="logoUrl", default=None)
+    exchange: Optional[str] = Field(alias="exchange", default=None)
 
     model_config = {"populate_by_name": True}
 
-
-class StockTradingData(BaseModel):
-    """Stock trading data model."""
-
-    stock: StockInfo
-    net_amount: float = Field(alias="netAmount")
-    total_amount: float = Field(alias="totalAmount")
-    total_volume: int = Field(alias="totalVolume")
+class BrokerStats(BaseModel):
     total_buy_amount: float = Field(alias="totalBuyAmount")
-    total_buy_volume: int = Field(alias="totalBuyVolume")
     total_sell_amount: float = Field(alias="totalSellAmount")
-    total_sell_volume: int = Field(alias="totalSellVolume")
+    net_amount: float = Field(alias="netAmount")
+    total_buy_volume: float = Field(alias="totalBuyVolume")
+    total_sell_volume: float = Field(alias="totalSellVolume")
+    total_volume: float = Field(alias="totalVolume")
+    total_amount: float = Field(alias="totalAmount")
+    average_cost: Optional[float] = Field(alias="averageCost", default=None)
 
     model_config = {"populate_by_name": True}
 
+class BrokerItem(BrokerStats):
+    broker: Optional[Broker] = None
+    stock: Optional[BrokerStock] = None
 
-class BrokerStockData(BaseModel):
-    """Broker stock data model."""
+class PaginatedResponse(BaseModel, Generic[T]):
+    """Generic paginated response model."""
 
-    items: List[StockTradingData]
-    total_stats: BrokerTotalStats = Field(alias="totalStats")
     record_count: int = Field(alias="recordCount")
+    items: List[T]
 
     model_config = {"populate_by_name": True}
 
+class BrokerList(PaginatedResponse[BrokerItem]):
+    total_stats: BrokerStats = Field(alias="totalStats")
+
+    model_config = {"populate_by_name": True}
 
 class BrokerSort(str, Enum):
     """Broker sort options."""
@@ -819,7 +717,7 @@ class BrokerSort(str, Enum):
     TOTAL_SELL_VOLUME = "totalSellVolume"
 
 
-class BrokerSortDirection(str, Enum):
+class SortDirection(str, Enum):
     """Broker sort direction options."""
 
     DESC = "desc"
@@ -830,32 +728,32 @@ class CapitalIncrease(BaseModel):
     """Capital increase model."""
 
     id: int
-    types: List[CapitalIncreaseType]
+    types: List[CapitalIncreaseType] = Field(default_factory=list, alias="types")
     symbol: str
-    bonus_rate: Optional[str] = Field(alias="bonusRate")
-    rights_rate: Optional[str] = Field(alias="rightsRate")
-    payment_date: Optional[datetime] = Field(alias="paymentDate")
-    rights_price: Optional[str] = Field(alias="rightsPrice")
-    rights_end_date: Optional[datetime] = Field(alias="rightsEndDate")
-    target_capital: Optional[str] = Field(alias="targetCapital")
-    bonus_start_date: Optional[datetime] = Field(alias="bonusStartDate")
-    current_capital: Optional[str] = Field(alias="currentCapital")
-    rights_start_date: Optional[datetime] = Field(alias="rightsStartDate")
-    spk_approval_date: Optional[str] = Field(alias="spkApprovalDate")
-    bonus_total_amount: Optional[str] = Field(alias="bonusTotalAmount")
-    registration_date: Optional[datetime] = Field(alias="registrationDate")
-    board_decision_date: Optional[datetime] = Field(alias="boardDecisionDate")
-    bonus_dividend_rate: Optional[str] = Field(alias="bonusDividendRate")
-    rights_total_amount: Optional[str] = Field(alias="rightsTotalAmount")
-    specified_currency: Optional[str] = Field(alias="specifiedCurrency")
-    rights_last_sell_date: Optional[datetime] = Field(alias="rightsLastSellDate")
-    spk_application_date: Optional[datetime] = Field(alias="spkApplicationDate")
+    bonus_rate: str = Field(alias="bonusRate")
+    rights_rate: str = Field(alias="rightsRate")
+    payment_date: Optional[datetime] = Field(alias="paymentDate", default=None)
+    rights_price: str = Field(alias="rightsPrice")
+    rights_end_date: Optional[datetime] = Field(alias="rightsEndDate", default=None)
+    target_capital: str = Field(alias="targetCapital")
+    bonus_start_date: Optional[datetime] = Field(alias="bonusStartDate", default=None)
+    current_capital: str = Field(alias="currentCapital")
+    rights_start_date: Optional[datetime] = Field(alias="rightsStartDate", default=None)
+    spk_approval_date: Optional[datetime] = Field(alias="spkApprovalDate", default=None)
+    bonus_total_amount: str = Field(alias="bonusTotalAmount")
+    registration_date: Optional[datetime] = Field(alias="registrationDate", default=None)
+    board_decision_date: Optional[datetime] = Field(alias="boardDecisionDate", default=None)
+    bonus_dividend_rate: str = Field(alias="bonusDividendRate")
+    rights_total_amount: str = Field(alias="rightsTotalAmount")
+    specified_currency: str = Field(alias="specifiedCurrency")
+    rights_last_sell_date: Optional[datetime] = Field(alias="rightsLastSellDate", default=None)
+    spk_application_date: Optional[datetime] = Field(alias="spkApplicationDate", default=None)
     related_disclosure_ids: List[int] = Field(alias="relatedDisclosureIds")
-    spk_application_result: Optional[str] = Field(alias="spkApplicationResult")
-    bonus_dividend_total_amount: Optional[str] = Field(alias="bonusDividendTotalAmount")
-    registered_capital_ceiling: Optional[str] = Field(alias="registeredCapitalCeiling")
-    external_capital_increase_rate: Optional[str] = Field(alias="externalCapitalIncreaseRate")
-    external_capital_increase_amount: Optional[str] = Field(alias="externalCapitalIncreaseAmount")
+    spk_application_result: Optional[str] = Field(alias="spkApplicationResult", default=None)
+    bonus_dividend_total_amount: str = Field(alias="bonusDividendTotalAmount")
+    registered_capital_ceiling: str = Field(alias="registeredCapitalCeiling")
+    external_capital_increase_rate: str = Field(alias="externalCapitalIncreaseRate")
+    external_capital_increase_amount: str = Field(alias="externalCapitalIncreaseAmount")
 
     model_config = {"populate_by_name": True}
 
@@ -868,6 +766,7 @@ class SearchResultStock(BaseModel):
     title: str
     region: Region
     asset_type: AssetType = Field(alias="assetType")
+    type: Optional[str] = None
 
     model_config = {"populate_by_name": True}
 
@@ -893,7 +792,7 @@ class EarningsTranscriptListItem(BaseModel):
     symbol: str
     year: int
     quarter: int
-    fiscal_year: Optional[int] = Field(alias="fiscal_year", default=None)
+    fiscal_year: int
 
     model_config = {"populate_by_name": True}
 
@@ -906,7 +805,7 @@ class EarningsTranscriptWithSummary(BaseModel):
     quarter: int
     content: str
     summary: Optional[str] = None
-    has_summary: Optional[bool] = Field(alias="has_summary", default=None)
+    has_summary: bool
 
     model_config = {"populate_by_name": True}
 
@@ -923,15 +822,6 @@ class MarketState(BaseModel):
     model_config = {"populate_by_name": True}
 
 
-class PaginatedResponse(BaseModel, Generic[T]):
-    """Generic paginated response model."""
-
-    record_count: int = Field(alias="recordCount")
-    items: List[T]
-
-    model_config = {"populate_by_name": True}
-
-
 class SearchData(BaseModel):
     """Search data model."""
 
@@ -939,5 +829,100 @@ class SearchData(BaseModel):
     collections: List[SearchResultCollection]
     sectors: List[SearchResultCollection]
     industries: List[SearchResultCollection]
+
+    model_config = {"populate_by_name": True}
+
+class NewsType(str, Enum):
+    """News type options."""
+
+    BRIEFS = "briefs"
+    BLOOMBERG = "bloomberg"
+    FDA = "fda"
+    REUTERS = "reuters"
+
+class NewsOrderBy(str, Enum):
+    """News order by options."""
+
+    TIMESTAMP = "timestamp"
+
+
+class NewsTicker(BaseModel):
+    id: str
+    name: str
+    symbol: Optional[str] = None
+
+    model_config = {"populate_by_name": True}
+
+class NewsPublisher(BaseModel):
+    name: str
+    logo_url: Optional[str] = Field(alias="logoUrl")
+
+    model_config = {"populate_by_name": True}
+
+class NewsIndustry(BaseModel):
+    name: str
+    mean_type: int = Field(alias="meanType")
+
+    model_config = {"populate_by_name": True}
+
+class NewsSector(BaseModel):
+    name: str
+    news_count: int = Field(alias="newsCount")
+    category_type: Optional[str] = Field(alias="categoryType", default=None)
+    mean_type: Optional[int] = Field(alias="meanType", default=None)
+
+    model_config = {"populate_by_name": True}
+
+class NewsCategory(BaseModel):
+    name: str
+    news_count: int = Field(alias="newsCount")
+    category_type: Optional[str] = Field(alias="categoryType", default=None)
+    mean_type: Optional[int] = Field(alias="meanType", default=None)
+
+    model_config = {"populate_by_name": True}
+
+class NewsContent(BaseModel):
+    title: str
+    description: str
+    content: List[str]
+    summary: List[str]
+    investor_insight: str = Field(alias="investorInsight")
+
+    model_config = {"populate_by_name": True}
+
+class News(BaseModel):
+    created_at: datetime = Field(alias="createdAt")
+    url: str
+    image_url: str = Field(alias="imageUrl")
+    timestamp: datetime
+    publisher_url: str = Field(alias="publisherUrl")
+
+    publisher: NewsPublisher
+    related_tickers: List[NewsTicker] = Field(alias="relatedTickers")
+
+    tickers: Optional[List[NewsTicker]] = None
+    categories: Optional[NewsCategory] = None
+    sectors: Optional[NewsSector] = None
+    content: Optional[NewsContent] = None
+    industries: Optional[NewsIndustry] = None
+
+    quality_score: int = Field(alias="qualityScore")
+
+    model_config = {"populate_by_name": True}
+class NewsHighlight(BaseModel):
+    consumer: List[str]
+    energy_and_utilities: List[str] = Field(alias="energyAndUtilities")
+    finance: List[str]
+    healthcare: List[str]
+    industrials_and_materials: List[str] = Field(alias="industrialsAndMaterials")
+    tech: List[str]
+    other: List[str]
+
+    model_config = {"populate_by_name": True}
+
+class WebsocketMonthlyUsageDataResponse(BaseModel):
+    external_user_id: str = Field(alias="externalUserID")
+    first_connection_time: datetime = Field(alias="firstConnectionTime")
+    unique_device_count: int = Field(alias="uniqueDeviceCount")
 
     model_config = {"populate_by_name": True}
