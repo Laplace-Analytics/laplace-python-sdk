@@ -62,7 +62,7 @@ class TestCapitalIncreaseIntegration:
                     "bonusRate": "30%",
                     "rightsRate": "",
                     "paymentDate": "2024-04-01T00:00:00.000Z",
-                    "rightsPrice": None,
+                    "rightsPrice": "",
                     "rightsEndDate": None,
                     "targetCapital": "800000000",
                     "bonusStartDate": "2024-03-15T00:00:00.000Z",
@@ -256,33 +256,47 @@ class TestCapitalIncreaseIntegration:
         # Real API response from /api/v1/rights/active/AKBNK?region=tr
         mock_response_data = [
             {
-                "id": 1,
-                "types": ["rights"],
-                "symbol": "AKBNK",
-                "bonusRate": None,
-                "rightsRate": "25%",
-                "paymentDate": "2024-03-15T00:00:00.000Z",
-                "rightsPrice": "15.50",
-                "rightsEndDate": "2024-04-15T00:00:00.000Z",
-                "targetCapital": "1000000000",
+                "id": 14,
+                "types": [
+                "bonus",
+                "rights"
+                ],
+                "symbol": "KONTR.E",
+                "bonusRate": "125",
+                "rightsRate": "100",
+                "paymentDate": "2024-07-23T00:00:00Z",
+                "rightsPrice": "1",
+                "rightsEndDate": "2024-08-02T00:00:00Z",
+                "targetCapital": "650000000",
                 "bonusStartDate": None,
-                "currentCapital": "800000000",
-                "rightsStartDate": "2024-03-10T00:00:00.000Z",
-                "spkApprovalDate": "2024-02-15",
-                "bonusTotalAmount": None,
-                "registrationDate": "2024-02-20T00:00:00.000Z",
-                "boardDecisionDate": "2024-01-15T00:00:00.000Z",
-                "bonusDividendRate": None,
+                "currentCapital": "200000000",
+                "rightsStartDate": "2024-07-19T00:00:00Z",
+                "spkApprovalDate": "2024-07-11T00:00:00Z",
+                "bonusTotalAmount": "250000000",
+                "registrationDate": "2024-07-22T00:00:00Z",
+                "boardDecisionDate": "2023-12-28T00:00:00Z",
+                "bonusDividendRate": "",
                 "rightsTotalAmount": "200000000",
                 "specifiedCurrency": "TRY",
-                "rightsLastSellDate": "2024-04-10T00:00:00.000Z",
-                "spkApplicationDate": "2024-01-20T00:00:00.000Z",
-                "relatedDisclosureIds": [12345, 12346],
-                "spkApplicationResult": "Approved",
-                "bonusDividendTotalAmount": None,
-                "registeredCapitalCeiling": "1200000000",
-                "externalCapitalIncreaseRate": None,
-                "externalCapitalIncreaseAmount": None,
+                "rightsLastSellDate": None,
+                "spkApplicationDate": "2024-01-24T00:00:00Z",
+                "relatedDisclosureIds": [
+                1325761,
+                1321185,
+                1230319,
+                1242601,
+                1313662,
+                1306320,
+                1312361,
+                1326784,
+                1323535,
+                1339591
+                ],
+                "spkApplicationResult": "onay",
+                "bonusDividendTotalAmount": "",
+                "registeredCapitalCeiling": "750000000",
+                "externalCapitalIncreaseRate": "",
+                "externalCapitalIncreaseAmount": ""
             }
         ]
 
@@ -302,33 +316,33 @@ class TestCapitalIncreaseIntegration:
 
         # Test active rights
         active_rights = response[0]
-        assert active_rights.id == 1
-        assert active_rights.symbol == "AKBNK"
-        assert active_rights.types == [CapitalIncreaseType.RIGHTS]
-        assert active_rights.bonus_rate is None
-        assert active_rights.rights_rate == "25%"
+        assert active_rights.id == 14
+        assert active_rights.symbol == "KONTR.E"
+        assert active_rights.types == [CapitalIncreaseType.BONUS, CapitalIncreaseType.RIGHTS]
+        assert active_rights.bonus_rate == "125"
+        assert active_rights.rights_rate == "100"
         assert isinstance(active_rights.payment_date, datetime)
-        assert active_rights.rights_price == "15.50"
+        assert active_rights.rights_price == "1"
         assert isinstance(active_rights.rights_end_date, datetime)
-        assert active_rights.target_capital == "1000000000"
+        assert active_rights.target_capital == "650000000"
         assert active_rights.bonus_start_date is None
-        assert active_rights.current_capital == "800000000"
+        assert active_rights.current_capital == "200000000"
         assert isinstance(active_rights.rights_start_date, datetime)
         assert isinstance(active_rights.spk_approval_date, datetime)
-        assert active_rights.bonus_total_amount is None
+        assert active_rights.bonus_total_amount == "250000000"
         assert isinstance(active_rights.registration_date, datetime)
         assert isinstance(active_rights.board_decision_date, datetime)
-        assert active_rights.bonus_dividend_rate is None
+        assert active_rights.bonus_dividend_rate == ""
         assert active_rights.rights_total_amount == "200000000"
         assert active_rights.specified_currency == "TRY"
-        assert isinstance(active_rights.rights_last_sell_date, datetime)
+        assert active_rights.rights_last_sell_date is None
         assert isinstance(active_rights.spk_application_date, datetime)
-        assert active_rights.related_disclosure_ids == [12345, 12346]
-        assert active_rights.spk_application_result == "Approved"
-        assert active_rights.bonus_dividend_total_amount is None
-        assert active_rights.registered_capital_ceiling == "1200000000"
-        assert active_rights.external_capital_increase_rate is None
-        assert active_rights.external_capital_increase_amount is None
+        assert active_rights.related_disclosure_ids == [1325761, 1321185, 1230319, 1242601, 1313662, 1306320, 1312361, 1326784, 1323535, 1339591]
+        assert active_rights.spk_application_result == "onay"
+        assert active_rights.bonus_dividend_total_amount == ""
+        assert active_rights.registered_capital_ceiling == "750000000"
+        assert active_rights.external_capital_increase_rate == ""
+        assert active_rights.external_capital_increase_amount == ""
 
     @patch("httpx.Client")
     def test_capital_increase_field_mapping(self, mock_httpx_client):
