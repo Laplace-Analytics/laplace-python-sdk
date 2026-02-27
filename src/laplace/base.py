@@ -39,7 +39,7 @@ class BaseClient:
         self.base_url = base_url.rstrip("/")
         self._client = httpx.Client(
             headers={
-                "User-Agent": "laplace-python-sdk/0.1.0",
+                "User-Agent": "laplace-python-sdk/1.0.0",
             },
             timeout=30.0,
         )
