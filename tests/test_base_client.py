@@ -6,6 +6,54 @@ import httpx
 import pytest
 
 from laplace.base import BaseClient, LaplaceAPIError
+from laplace.models import BrokerStock, BrokerStats
+
+
+class TestDefaultUrls:
+    """Tests for default URL configuration across clients."""
+
+    def test_laplace_client_defaults_to_production(self):
+        """Test LaplaceClient defaults to production URL, not UAT."""
+        from laplace.client import LaplaceClient
+        with patch("httpx.Client"):
+            client = LaplaceClient(api_key="test-key")
+        assert "uat" not in client.base_url
+        assert client.base_url == "https://api.finfree.app/api"
+
+    def test_websocket_client_defaults_to_production(self):
+        """Test LivePriceWebSocketClient defaults to production URL, not UAT."""
+        from laplace.websocket import LivePriceWebSocketClient, LivePriceFeed
+        client = LivePriceWebSocketClient(
+            feeds=[LivePriceFeed.LIVE_BIST],
+            external_user_id="test",
+            api_key="test-key",
+        )
+        assert "uat" not in client.base_url
+        assert client.base_url == "https://api.finfree.app/api"
+
+
+class TestModelConfig:
+    """Tests for model_config on models that use Field aliases."""
+
+    def test_broker_stock_populate_by_name(self):
+        """Test BrokerStock can be constructed using Python field names."""
+        stock = BrokerStock(
+            id="1", symbol="AKBNK", name="Akbank",
+            asset_type="stock", asset_class="equity",
+        )
+        assert stock.asset_type == "stock"
+        assert stock.asset_class == "equity"
+
+    def test_broker_stats_populate_by_name(self):
+        """Test BrokerStats can be constructed using Python field names."""
+        stats = BrokerStats(
+            total_buy_amount=100.0, total_sell_amount=50.0,
+            net_amount=50.0, total_buy_volume=1000.0,
+            total_sell_volume=500.0, total_volume=1500.0,
+            total_amount=150.0,
+        )
+        assert stats.net_amount == 50.0
+        assert stats.total_volume == 1500.0
 
 
 class TestBaseClient:

@@ -225,6 +225,33 @@ class TestNewsUnit:
         assert len(highlights.energy_and_utilities) == 2
         assert len(highlights.industrials_and_materials) == 2
 
+    @patch("httpx.Client")
+    def test_get_news_with_extra_filters(self, mock_httpx_client):
+        """Test that extra_filters parameter is passed correctly."""
+        mock_response_data = {"recordCount": 0, "items": []}
+
+        mock_client_instance = Mock()
+        mock_httpx_client.return_value = mock_client_instance
+
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "get", return_value=mock_response_data) as mock_get:
+            client.news.get_news(
+                locale="en",
+                region=Region.US,
+                extra_filters="symbol eq AAPL",
+            )
+
+        call_params = mock_get.call_args
+        assert call_params[1]["params"]["extraFilters"] == "symbol eq AAPL"
+
+    def test_news_client_does_not_inherit_base_client(self):
+        """Test that NewsClient uses composition, not inheritance."""
+        from laplace.base import BaseClient
+        from laplace.news import NewsClient
+        assert not issubclass(NewsClient, BaseClient)
+
+
 class TestNewsIntegration:
     """Real integration tests (requires API key)."""
 
