@@ -259,6 +259,8 @@ class LivePriceWebSocketClient(BaseClient):
                         symbol=message_data.get("s"),
                         price=message_data.get("p"),
                         date=message_data.get("t"),
+                        pc=message_data.get("pc"),
+                        ac=message_data.get("ac"),
                     )
                 elif feed == LivePriceFeed.DEPTH_BIST:
                     price_data = BISTStockOrderBookData(
