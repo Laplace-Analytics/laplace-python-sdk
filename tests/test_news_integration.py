@@ -161,8 +161,8 @@ class TestNewsUnit:
             response = client.news.get_news(
                 locale="tr",
                 region=Region.US,
-                news_type=NewsType.Bloomberg,
-                news_order_by=NewsOrderBy.Timestamp,
+                news_type=NewsType.BLOOMBERG,
+                news_order_by=NewsOrderBy.TIMESTAMP,
                 direction=SortDirection.DESC,
                 page=0,
                 page_size=PaginationPageSize.PAGE_SIZE_10,
@@ -258,8 +258,8 @@ class TestNewsIntegration:
         response = integration_client.news.get_news(
             locale="tr",
             region=Region.US,
-            news_type=NewsType.Bloomberg,
-            news_order_by=NewsOrderBy.Timestamp,
+            news_type=NewsType.BLOOMBERG,
+            news_order_by=NewsOrderBy.TIMESTAMP,
             direction=SortDirection.DESC,
             page=0,
             page_size=PaginationPageSize.PAGE_SIZE_10,

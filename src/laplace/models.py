@@ -831,15 +831,15 @@ class SearchData(BaseModel):
 class NewsType(str, Enum):
     """News type options."""
 
-    Briefs = "briefs"
-    Bloomberg = "bloomberg"
-    Fda = "fda"
-    Reuters = "Reuters"
+    BRIEFS = "briefs"
+    BLOOMBERG = "bloomberg"
+    FDA = "fda"
+    REUTERS = "reuters"
 
 class NewsOrderBy(str, Enum):
-    """News Order by options."""
+    """News order by options."""
 
-    Timestamp = "timestamp"
+    TIMESTAMP = "timestamp"
 
 
 class NewsTicker(BaseModel):
