@@ -106,7 +106,7 @@ class StockDetail(BaseModel):
     short_description: str = Field(alias="shortDescription")
     localized_description: Dict[str, str] = Field(alias="localized_description")
     localized_short_description: Dict[str, str] = Field(alias="localizedShortDescription")
-    markets: Optional[List[dict]] = None
+    markets: Optional[List[str]] = None
 
     model_config = {"populate_by_name": True}
 
