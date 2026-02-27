@@ -152,11 +152,11 @@ class LivePriceWebSocketClient(BaseClient):
         else:
             self._logger.info(message)
 
-    async def connect(self, url: str) -> None:
+    async def connect(self, url: Optional[str] = None) -> None:
         """Connect to the WebSocket with automatic reconnection.
 
         Args:
-            url: Optional WebSocket URL (if not provided, will be fetched from API)
+            url: WebSocket URL. If not provided, will be fetched from the API.
         """
         self._log("Connecting to WebSocket...")
 
@@ -165,6 +165,19 @@ class LivePriceWebSocketClient(BaseClient):
 
         # Store the current event loop
         self._loop = asyncio.get_running_loop()
+
+        if url is None:
+            feed_values = [feed.value for feed in self.feeds]
+            response = self.post(
+                "v2/ws/url",
+                json={
+                    "externalUserId": self.external_user_id,
+                    "feeds": feed_values,
+                },
+            )
+            url = response.get("url", "")
+            if not url:
+                raise WebSocketError("Failed to get WebSocket URL from API")
 
         self._ws_url = url
 
