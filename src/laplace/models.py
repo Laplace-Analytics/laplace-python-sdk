@@ -674,6 +674,8 @@ class BrokerStock(BaseModel):
     logo_url: Optional[str] = Field(alias="logoUrl", default=None)
     exchange: Optional[str] = Field(alias="exchange", default=None)
 
+    model_config = {"populate_by_name": True}
+
 class BrokerStats(BaseModel):
     total_buy_amount: float = Field(alias="totalBuyAmount")
     total_sell_amount: float = Field(alias="totalSellAmount")
@@ -683,6 +685,8 @@ class BrokerStats(BaseModel):
     total_volume: float = Field(alias="totalVolume")
     total_amount: float = Field(alias="totalAmount")
     average_cost: Optional[float] = Field(alias="averageCost", default=None)
+
+    model_config = {"populate_by_name": True}
 
 class BrokerItem(BrokerStats):
     broker: Optional[Broker] = None

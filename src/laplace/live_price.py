@@ -193,7 +193,7 @@ class LivePriceStream(Generic[T]):
 class BidAskStream:
     """Handles bid/ask price streaming for Turkish (BIST) stocks."""
 
-    def __init__(self, base_client):
+    def __init__(self, base_client: BaseClient):
         self.base_client = base_client
         self._task: Optional[asyncio.Task] = None
         self._queue: Optional[asyncio.Queue] = None
