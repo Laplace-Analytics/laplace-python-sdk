@@ -15,7 +15,7 @@ from .models import (
 )
 
 
-class NewsClient(BaseClient):
+class NewsClient:
     """Client for news API endpoints."""
 
     def __init__(self, base_client: BaseClient):

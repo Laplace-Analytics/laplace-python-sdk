@@ -314,7 +314,7 @@ class BidAskStream:
             await self._queue.put(error_result)
 
 
-class LivePriceClient(BaseClient):
+class LivePriceClient:
     """Main client for live price functionality."""
 
     def __init__(self, base_client: BaseClient):
