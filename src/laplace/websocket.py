@@ -92,7 +92,7 @@ class LivePriceWebSocketClient(BaseClient):
         feeds: List[LivePriceFeed],
         external_user_id: str,
         api_key: str,
-        base_url: str = "https://uat.api.finfree.app/api",
+        base_url: str = "https://api.finfree.app/api",
         options: Optional[WebsocketOptions] = None,
     ):
         """Initialize the WebSocket client.

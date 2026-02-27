@@ -20,7 +20,7 @@ from typing import Optional, List
 class LaplaceClient(BaseClient):
     """Main Laplace API client with all sub-clients."""
 
-    def __init__(self, api_key: str, base_url: str = "https://uat.api.finfree.app/api"):
+    def __init__(self, api_key: str, base_url: str = "https://api.finfree.app/api"):
         """Initialize the Laplace client.
 
         Args:
