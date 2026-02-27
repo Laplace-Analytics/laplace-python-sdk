@@ -413,7 +413,7 @@ class LivePriceClient(BaseClient):
         feed_values = [feed.value for feed in feeds]
 
         response = self.base_client.post(
-            "api/v2/ws/url",
+            "v2/ws/url",
             json={
                 "externalUserId": external_user_id,
                 "feeds": feed_values,
@@ -441,7 +441,7 @@ class LivePriceClient(BaseClient):
         }
 
         response = self.base_client.get(
-            "api/v1/ws/report",
+            "v1/ws/report",
             params=params,
         )
 
@@ -473,4 +473,4 @@ class LivePriceClient(BaseClient):
         if transient is not None:
             data["transient"] = transient
 
-        self.base_client.post("api/v1/ws/event", json=data)
+        self.base_client.post("v1/ws/event", json=data)
