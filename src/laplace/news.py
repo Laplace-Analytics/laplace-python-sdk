@@ -1,8 +1,9 @@
 import asyncio
 import json
-from typing import Dict, Optional, AsyncGenerator, List, Generic
+from typing import AsyncGenerator, Dict, Generic, List, Optional
 
 import httpx
+
 from laplace.base import BaseClient
 
 from .models import (
@@ -12,8 +13,8 @@ from .models import (
     NewsOrderBy,
     NewsType,
     PaginatedResponse,
-    Region,
     PaginationPageSize,
+    Region,
     SortDirection,
     T,
 )
@@ -100,7 +101,8 @@ class NewsStream:
                 async with client.stream("GET", url, headers=headers) as response:
                     if response.status_code != 200:
                         error_body = await response.aread()
-                        error_msg = f"News stream failed: {response.status_code} - {error_body.decode()}"
+                        error_msg = f"News stream failed: {response.status_code} - "
+                        error_msg += f"{error_body.decode()}"
                         await self._put_error(error_msg)
                         return
 
@@ -127,7 +129,7 @@ class NewsStream:
                 json_data = line[5:].strip()  # Remove "data:" prefix
                 if not json_data:
                     continue
-                    
+
                 parsed_data = json.loads(json_data)
 
                 # Process array of news items
@@ -226,10 +228,10 @@ class NewsClient:
 
     async def get_news_stream(self, locale: Locale) -> NewsStream:
         """Start streaming news updates.
-        
+
         Args:
             locale: Locale code (e.g., "tr", "en")
-            
+
         Returns:
             NewsStream for consuming news items
         """
