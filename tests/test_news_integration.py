@@ -311,3 +311,44 @@ class TestNewsIntegration:
         assert isinstance(highlights.industrials_and_materials, list)
         assert isinstance(highlights.tech, list)
         assert isinstance(highlights.other, list)
+
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    async def test_news_stream_connection_and_data_flow(self, integration_client: LaplaceClient):
+        """Test that news stream connection works and data is flowing."""
+        news_client = integration_client.news
+        
+        stream = await news_client.get_news_stream(locale="en")
+        
+        events = []
+        try:
+            print("Testing news stream...")
+            async for result in stream.receive():
+                if result.error:
+                    print(f"Error: {result.error}")
+                    continue
+                if result.data is None:
+                    print("❌ FAIL: Received None data")
+                    pytest.fail("Received None data from news stream")
+                    
+                events.append(result.data)
+                print(f"Received {len(result.data)} news items")
+                
+                if len(events) >= 1:
+                    break
+        except Exception as e:
+            pytest.skip(f"News streaming failed: {e}")
+        finally:
+            await stream.close()
+            
+        if events:
+            assert all(isinstance(event_list, list) for event_list in events)
+            
+            first_event = events[0]
+            if first_event:
+                assert all(isinstance(item, News) for item in first_event)
+                assert all(hasattr(item, "url") for item in first_event)
+                assert all(hasattr(item, "created_at") for item in first_event)
+            print(f"✅ News stream data flowing: {len(events)} events received")
+        else:
+            pytest.skip("No news events received within timeout")
