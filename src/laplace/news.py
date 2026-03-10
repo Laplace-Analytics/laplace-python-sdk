@@ -37,8 +37,8 @@ class NewsStream:
     """Handles Server-Sent Events (SSE) stream for news."""
 
     def __init__(
-        self, 
-        base_client: BaseClient, 
+        self,
+        base_client: BaseClient,
         locale: Locale,
         sectors: Optional[str] = None,
         tickers: Optional[str] = None,
@@ -106,7 +106,7 @@ class NewsStream:
             params["categories"] = self.categories
         if self.industries:
             params["industries"] = self.industries
-            
+
         query_string = urllib.parse.urlencode(params)
         return f"{url}?{query_string}"
 
@@ -251,7 +251,7 @@ class NewsClient:
         return NewsHighlight(**response)
 
     async def get_news_stream(
-        self, 
+        self,
         locale: Locale,
         sectors: Optional[str] = None,
         tickers: Optional[str] = None,
@@ -271,7 +271,7 @@ class NewsClient:
             NewsStream for consuming news items
         """
         stream = NewsStream(
-            self._client, 
+            self._client,
             locale,
             sectors=sectors,
             tickers=tickers,
