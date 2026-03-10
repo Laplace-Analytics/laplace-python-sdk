@@ -251,6 +251,34 @@ class TestNewsUnit:
         from laplace.news import NewsClient
         assert not issubclass(NewsClient, BaseClient)
 
+    def test_news_stream_url_building(self):
+        """Test that stream URL building works with optional filters."""
+        from laplace.base import BaseClient
+        from laplace.news import NewsStream
+        
+        mock_client = Mock(spec=BaseClient)
+        mock_client.base_url = "http://test-api.com"
+        
+        # Test just locale
+        stream = NewsStream(mock_client, locale="en")
+        assert stream._build_stream_url() == "http://test-api.com/v1/news/stream?locale=en"
+        
+        # Test all filters
+        stream = NewsStream(
+            mock_client, 
+            locale="tr", 
+            sectors="Technology,Finance", 
+            tickers="AAPL,MSFT",
+            categories="Market",
+            industries="Software"
+        )
+        url = stream._build_stream_url()
+        assert "locale=tr" in url
+        assert "sectors=Technology%2CFinance" in url
+        assert "tickers=AAPL%2CMSFT" in url
+        assert "categories=Market" in url
+        assert "industries=Software" in url
+
 
 class TestNewsIntegration:
     """Real integration tests (requires API key)."""

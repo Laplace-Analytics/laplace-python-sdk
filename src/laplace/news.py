@@ -1,5 +1,6 @@
 import asyncio
 import json
+import urllib.parse
 from typing import AsyncGenerator, Dict, Generic, List, Optional
 
 import httpx
@@ -35,9 +36,21 @@ class NewsStreamResult(Generic[T]):
 class NewsStream:
     """Handles Server-Sent Events (SSE) stream for news."""
 
-    def __init__(self, base_client: BaseClient, locale: Locale):
+    def __init__(
+        self, 
+        base_client: BaseClient, 
+        locale: Locale,
+        sectors: Optional[str] = None,
+        tickers: Optional[str] = None,
+        categories: Optional[str] = None,
+        industries: Optional[str] = None,
+    ):
         self.base_client = base_client
         self.locale = locale
+        self.sectors = sectors
+        self.tickers = tickers
+        self.categories = categories
+        self.industries = industries
         self._task: Optional[asyncio.Task] = None
         self._queue: Optional[asyncio.Queue[NewsStreamResult[List[News]]]] = None
         self._is_closed = False
@@ -83,8 +96,19 @@ class NewsStream:
 
     def _build_stream_url(self) -> str:
         """Build the streaming URL for the news endpoint."""
-        url = self.base_client.base_url
-        return f"{url}/v1/news/stream?locale={self.locale}"
+        url = f"{self.base_client.base_url}/v1/news/stream"
+        params = {"locale": self.locale}
+        if self.sectors:
+            params["sectors"] = self.sectors
+        if self.tickers:
+            params["tickers"] = self.tickers
+        if self.categories:
+            params["categories"] = self.categories
+        if self.industries:
+            params["industries"] = self.industries
+            
+        query_string = urllib.parse.urlencode(params)
+        return f"{url}?{query_string}"
 
     async def _start_streaming(self) -> None:
         """Start the SSE streaming connection."""
@@ -226,15 +250,33 @@ class NewsClient:
         response = self._client.get("v1/news/highlights", params=params)
         return NewsHighlight(**response)
 
-    async def get_news_stream(self, locale: Locale) -> NewsStream:
+    async def get_news_stream(
+        self, 
+        locale: Locale,
+        sectors: Optional[str] = None,
+        tickers: Optional[str] = None,
+        categories: Optional[str] = None,
+        industries: Optional[str] = None,
+    ) -> NewsStream:
         """Start streaming news updates.
 
         Args:
             locale: Locale code (e.g., "tr", "en")
+            sectors: Optional comma-separated list of sectors
+            tickers: Optional comma-separated list of tickers
+            categories: Optional comma-separated list of categories
+            industries: Optional comma-separated list of industries
 
         Returns:
             NewsStream for consuming news items
         """
-        stream = NewsStream(self._client, locale)
+        stream = NewsStream(
+            self._client, 
+            locale,
+            sectors=sectors,
+            tickers=tickers,
+            categories=categories,
+            industries=industries,
+        )
         await stream.subscribe()
         return stream
