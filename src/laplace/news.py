@@ -40,10 +40,10 @@ class NewsStream:
         self,
         base_client: BaseClient,
         locale: Locale,
-        sectors: Optional[str] = None,
-        tickers: Optional[str] = None,
-        categories: Optional[str] = None,
-        industries: Optional[str] = None,
+        sectors: Optional[List[str]] = None,
+        tickers: Optional[List[str]] = None,
+        categories: Optional[List[str]] = None,
+        industries: Optional[List[str]] = None,
     ):
         self.base_client = base_client
         self.locale = locale
@@ -99,13 +99,13 @@ class NewsStream:
         url = f"{self.base_client.base_url}/v1/news/stream"
         params = {"locale": self.locale}
         if self.sectors:
-            params["sectors"] = self.sectors
+            params["sectors"] = ",".join(self.sectors)
         if self.tickers:
-            params["tickers"] = self.tickers
+            params["tickers"] = ",".join(self.tickers)
         if self.categories:
-            params["categories"] = self.categories
+            params["categories"] = ",".join(self.categories)
         if self.industries:
-            params["industries"] = self.industries
+            params["industries"] = ",".join(self.industries)
 
         query_string = urllib.parse.urlencode(params)
         return f"{url}?{query_string}"
@@ -253,19 +253,19 @@ class NewsClient:
     async def get_news_stream(
         self,
         locale: Locale,
-        sectors: Optional[str] = None,
-        tickers: Optional[str] = None,
-        categories: Optional[str] = None,
-        industries: Optional[str] = None,
+        sectors: Optional[List[str]] = None,
+        tickers: Optional[List[str]] = None,
+        categories: Optional[List[str]] = None,
+        industries: Optional[List[str]] = None,
     ) -> NewsStream:
         """Start streaming news updates.
 
         Args:
             locale: Locale code (e.g., "tr", "en")
-            sectors: Optional comma-separated list of sectors
-            tickers: Optional comma-separated list of tickers
-            categories: Optional comma-separated list of categories
-            industries: Optional comma-separated list of industries
+            sectors: Optional list of sectors
+            tickers: Optional list of tickers
+            categories: Optional list of categories
+            industries: Optional list of industries
 
         Returns:
             NewsStream for consuming news items

@@ -267,10 +267,10 @@ class TestNewsUnit:
         stream = NewsStream(
             mock_client, 
             locale="tr", 
-            sectors="Technology,Finance", 
-            tickers="AAPL,MSFT",
-            categories="Market",
-            industries="Software"
+            sectors=["Technology", "Finance"], 
+            tickers=["AAPL", "MSFT"],
+            categories=["Market"],
+            industries=["Software"]
         )
         url = stream._build_stream_url()
         assert "locale=tr" in url
