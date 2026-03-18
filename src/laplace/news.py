@@ -10,6 +10,7 @@ from laplace.base import BaseClient
 from .models import (
     Locale,
     News,
+    NewsV2,
     NewsHighlight,
     NewsOrderBy,
     NewsType,
@@ -52,18 +53,18 @@ class NewsStream:
         self.categories = categories
         self.industries = industries
         self._task: Optional[asyncio.Task] = None
-        self._queue: Optional[asyncio.Queue[NewsStreamResult[List[News]]]] = None
+        self._queue: Optional[asyncio.Queue[NewsStreamResult[List[NewsV2]]]] = None
         self._is_closed = False
 
     async def subscribe(self) -> None:
         """Subscribe to news updates stream."""
         await self._cleanup_existing_stream()
 
-        self._queue = asyncio.Queue[NewsStreamResult[List[News]]]()
+        self._queue = asyncio.Queue[NewsStreamResult[List[NewsV2]]]()
         self._is_closed = False
         self._task = asyncio.create_task(self._start_streaming())
 
-    async def receive(self) -> AsyncGenerator[NewsStreamResult[List[News]], None]:
+    async def receive(self) -> AsyncGenerator[NewsStreamResult[List[NewsV2]], None]:
         """Receive news data from the stream."""
         if not self._queue:
             raise RuntimeError("Not subscribed. Call subscribe() first.")
@@ -157,8 +158,8 @@ class NewsStream:
                 parsed_data = json.loads(json_data)
 
                 # Process array of news items
-                news_items = [News(**item) for item in parsed_data]
-                result = NewsStreamResult[List[News]](data=news_items)
+                news_items = [NewsV2(**item) for item in parsed_data]
+                result = NewsStreamResult[List[NewsV2]](data=news_items)
                 await self._queue.put(result)
 
             except Exception as e:
@@ -168,7 +169,7 @@ class NewsStream:
     async def _put_error(self, error_message: str) -> None:
         """Put an error result in the queue."""
         if self._queue:
-            error_result = NewsStreamResult[List[News]](error=error_message)
+            error_result = NewsStreamResult[List[NewsV2]](error=error_message)
             await self._queue.put(error_result)
 
 
@@ -227,6 +228,51 @@ class NewsClient:
 
         response = self._client.get("v1/news", params=params)
         return PaginatedResponse[News](**response)
+
+    def get_news_v2(
+        self,
+        locale: Locale,
+        region: Region,
+        news_type: Optional[NewsType] = None,
+        news_order_by: Optional[NewsOrderBy] = None,
+        direction: Optional[SortDirection] = None,
+        extra_filters: Optional[str] = None,
+        page: int = 0,
+        page_size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
+    ) -> PaginatedResponse[NewsV2]:
+        """Retrieve paginated news (v2).
+
+        Args:
+            locale: Locale code (e.g. "tr", "en")
+            region: Region enum (e.g. Region.TR)
+            news_type: Optional news type filter
+            news_order_by: Optional sorting field
+            direction: Optional sort direction
+            extra_filters: Optional extra filters (API-specific)
+            page: Page number (default: 0)
+            page_size: Page size enum (default: 10)
+
+        Returns:
+            PaginatedResponse[NewsV2]
+        """
+        params: Dict[str, object] = {
+            "locale": locale,
+            "region": region.value,
+            "page": page,
+            "size": page_size.value,
+        }
+
+        if news_type is not None:
+            params["newsType"] = news_type.value
+        if news_order_by is not None:
+            params["orderBy"] = news_order_by.value
+        if direction is not None:
+            params["orderByDirection"] = direction.value
+        if extra_filters:
+            params["extraFilters"] = extra_filters
+
+        response = self._client.get("v2/news", params=params)
+        return PaginatedResponse[NewsV2](**response)
 
     def get_highlights(
         self,
