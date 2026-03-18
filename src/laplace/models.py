@@ -909,6 +909,25 @@ class News(BaseModel):
     quality_score: int = Field(alias="qualityScore")
 
     model_config = {"populate_by_name": True}
+
+class NewsV2(BaseModel):
+    created_at: datetime = Field(alias="createdAt")
+    url: str
+    image_url: str = Field(alias="imageUrl")
+    timestamp: datetime
+    publisher_url: str = Field(alias="publisherUrl")
+
+    publisher: NewsPublisher
+
+    tickers: Optional[List[NewsTicker]] = None
+    categories: Optional[NewsCategory] = None
+    sectors: Optional[NewsSector] = None
+    content: Optional[NewsContent] = None
+    industries: Optional[NewsIndustry] = None
+
+    quality_score: int = Field(alias="qualityScore")
+
+    model_config = {"populate_by_name": True}
 class NewsHighlight(BaseModel):
     consumer: List[str]
     energy_and_utilities: List[str] = Field(alias="energyAndUtilities")
