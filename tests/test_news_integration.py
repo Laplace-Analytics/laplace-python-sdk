@@ -259,21 +259,25 @@ class TestNewsUnit:
         mock_client = Mock(spec=BaseClient)
         mock_client.base_url = "http://test-api.com"
         
-        # Test just locale
-        stream = NewsStream(mock_client, locale="en")
-        assert stream._build_stream_url() == "http://test-api.com/v1/news/stream?locale=en"
-        
+        # Test just locale and region
+        stream = NewsStream(mock_client, "en", Region.US)
+        url = stream._build_stream_url()
+        assert "locale=en" in url
+        assert "region=us" in url
+
         # Test all filters
         stream = NewsStream(
-            mock_client, 
-            locale="tr", 
-            sectors=["Technology", "Finance"], 
+            mock_client,
+            "tr",
+            Region.TR,
+            sectors=["Technology", "Finance"],
             tickers=["AAPL", "MSFT"],
             categories=["Market"],
             industries=["Software"]
         )
         url = stream._build_stream_url()
         assert "locale=tr" in url
+        assert "region=tr" in url
         assert "sectors=Technology%2CFinance" in url
         assert "tickers=AAPL%2CMSFT" in url
         assert "categories=Market" in url
@@ -346,7 +350,7 @@ class TestNewsIntegration:
         """Test that news stream connection works and data is flowing."""
         news_client = integration_client.news
         
-        stream = await news_client.get_news_stream(locale="en")
+        stream = await news_client.get_news_stream(locale="en", region=Region.US)
         
         events = []
         try:
