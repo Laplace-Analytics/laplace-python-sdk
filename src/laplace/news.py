@@ -41,6 +41,7 @@ class NewsStream:
         self,
         base_client: BaseClient,
         locale: Locale,
+        region: Region,
         sectors: Optional[List[str]] = None,
         tickers: Optional[List[str]] = None,
         categories: Optional[List[str]] = None,
@@ -48,6 +49,7 @@ class NewsStream:
     ):
         self.base_client = base_client
         self.locale = locale
+        self.region = region
         self.sectors = sectors
         self.tickers = tickers
         self.categories = categories
@@ -98,7 +100,7 @@ class NewsStream:
     def _build_stream_url(self) -> str:
         """Build the streaming URL for the news endpoint."""
         url = f"{self.base_client.base_url}/v1/news/stream"
-        params = {"locale": self.locale}
+        params = {"locale": self.locale, "region": self.region.value}
         if self.sectors:
             params["sectors"] = ",".join(self.sectors)
         if self.tickers:
@@ -299,6 +301,7 @@ class NewsClient:
     async def get_news_stream(
         self,
         locale: Locale,
+        region: Region,
         sectors: Optional[List[str]] = None,
         tickers: Optional[List[str]] = None,
         categories: Optional[List[str]] = None,
@@ -308,6 +311,7 @@ class NewsClient:
 
         Args:
             locale: Locale code (e.g., "tr", "en")
+            region: Region enum (e.g. Region.TR)
             sectors: Optional list of sectors
             tickers: Optional list of tickers
             categories: Optional list of categories
@@ -319,6 +323,7 @@ class NewsClient:
         stream = NewsStream(
             self._client,
             locale,
+            region,
             sectors=sectors,
             tickers=tickers,
             categories=categories,
