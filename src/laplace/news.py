@@ -100,7 +100,7 @@ class NewsStream:
     def _build_stream_url(self) -> str:
         """Build the streaming URL for the news endpoint."""
         url = f"{self.base_client.base_url}/v1/news/stream"
-        params = {"locale": self.locale, "region": self.region}
+        params = {"locale": self.locale, "region": self.region.value}
         if self.sectors:
             params["sectors"] = ",".join(self.sectors)
         if self.tickers:
