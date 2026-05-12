@@ -10,6 +10,7 @@ from .financials import FinancialsClient
 from .funds import FundsClient
 from .live_price import LivePriceClient
 from .politician import PoliticianClient
+from .screener import ScreenerClient
 from .search import SearchClient
 from .state import StateClient
 from .stocks import StocksClient
@@ -42,6 +43,7 @@ class LaplaceClient(BaseClient):
         self.search = SearchClient(self)
         self.state = StateClient(self)
         self.news = NewsClient(self)
+        self.screener = ScreenerClient(self)
 
         # WebSocket client will be created on demand
         self._websocket_client: Optional[LivePriceWebSocketClient] = None
