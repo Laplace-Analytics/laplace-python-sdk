@@ -939,6 +939,69 @@ class NewsHighlight(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+class ScreenerRangeFilter(BaseModel):
+    """Min/max numeric range filter for the screener."""
+
+    min: Optional[float] = None
+    max: Optional[float] = None
+
+
+class ScreenerFilters(BaseModel):
+    """Filters accepted by the screener endpoint."""
+
+    price: Optional[ScreenerRangeFilter] = None
+    daily_change: Optional[ScreenerRangeFilter] = Field(default=None, alias="dailyChange")
+    pe_ratio: Optional[ScreenerRangeFilter] = Field(default=None, alias="peRatio")
+    pb_ratio: Optional[ScreenerRangeFilter] = Field(default=None, alias="pbRatio")
+    market_cap: Optional[ScreenerRangeFilter] = Field(default=None, alias="marketCap")
+    weekly_return: Optional[ScreenerRangeFilter] = Field(default=None, alias="weeklyReturn")
+    monthly_return: Optional[ScreenerRangeFilter] = Field(default=None, alias="monthlyReturn")
+    three_month_return: Optional[ScreenerRangeFilter] = Field(default=None, alias="threeMonthReturn")
+    yearly_return: Optional[ScreenerRangeFilter] = Field(default=None, alias="yearlyReturn")
+    three_year_return: Optional[ScreenerRangeFilter] = Field(default=None, alias="threeYearReturn")
+    five_year_return: Optional[ScreenerRangeFilter] = Field(default=None, alias="fiveYearReturn")
+    ytd_return: Optional[ScreenerRangeFilter] = Field(default=None, alias="ytdReturn")
+
+    model_config = {"populate_by_name": True}
+
+
+class ScreenerSortBy(str, Enum):
+    """Sort fields supported by the screener endpoint."""
+
+    PRICE = "price"
+    DAILY_CHANGE = "dailyChange"
+    MARKET_CAP = "marketCap"
+    PE_RATIO = "peRatio"
+    PB_RATIO = "pbRatio"
+    WEEKLY_RETURN = "weeklyReturn"
+    MONTHLY_RETURN = "monthlyReturn"
+    THREE_MONTH_RETURN = "threeMonthReturn"
+    YEARLY_RETURN = "yearlyReturn"
+    THREE_YEAR_RETURN = "threeYearReturn"
+    FIVE_YEAR_RETURN = "fiveYearReturn"
+    YTD_RETURN = "ytdReturn"
+
+
+class ScreenerStock(BaseModel):
+    """A single stock entry returned by the screener endpoint."""
+
+    symbol: str
+    price: Optional[float] = None
+    daily_change: Optional[float] = Field(default=None, alias="dailyChange")
+    market_cap: Optional[float] = Field(default=None, alias="marketCap")
+    pe_ratio: Optional[float] = Field(default=None, alias="peRatio")
+    pb_ratio: Optional[float] = Field(default=None, alias="pbRatio")
+    weekly_return: Optional[float] = Field(default=None, alias="weeklyReturn")
+    monthly_return: Optional[float] = Field(default=None, alias="monthlyReturn")
+    three_month_return: Optional[float] = Field(default=None, alias="threeMonthReturn")
+    yearly_return: Optional[float] = Field(default=None, alias="yearlyReturn")
+    three_year_return: Optional[float] = Field(default=None, alias="threeYearReturn")
+    five_year_return: Optional[float] = Field(default=None, alias="fiveYearReturn")
+    ytd_return: Optional[float] = Field(default=None, alias="ytdReturn")
+
+    model_config = {"populate_by_name": True}
+
+
 class WebsocketMonthlyUsageDataResponse(BaseModel):
     external_user_id: str = Field(alias="externalUserID")
     first_connection_time: datetime = Field(alias="firstConnectionTime")
