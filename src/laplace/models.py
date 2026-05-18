@@ -968,6 +968,7 @@ class ScreenerFilters(BaseModel):
 class ScreenerSortBy(str, Enum):
     """Sort fields supported by the screener endpoint."""
 
+    SYMBOL = "symbol"
     PRICE = "price"
     DAILY_CHANGE = "dailyChange"
     MARKET_CAP = "marketCap"
