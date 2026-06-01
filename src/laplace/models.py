@@ -844,6 +844,7 @@ class NewsOrderBy(str, Enum):
     """News order by options."""
 
     TIMESTAMP = "timestamp"
+    QUALITY_SCORE = "quality_score"
 
 
 class NewsTicker(BaseModel):
@@ -878,6 +879,18 @@ class NewsCategory(BaseModel):
     news_count: int = Field(alias="newsCount")
     category_type: Optional[str] = Field(alias="categoryType", default=None)
     mean_type: Optional[int] = Field(alias="meanType", default=None)
+
+    model_config = {"populate_by_name": True}
+
+class NewsCategoryListItem(BaseModel):
+    """A canonical news category as returned by /api/v1/news/categories.
+
+    The ``name`` is the exact value accepted by the ``categories`` filter of the
+    News V2 and Live News Stream endpoints.
+    """
+
+    id: str
+    name: str
 
     model_config = {"populate_by_name": True}
 

@@ -11,6 +11,7 @@ from .models import (
     Locale,
     News,
     NewsV2,
+    NewsCategoryListItem,
     NewsHighlight,
     NewsOrderBy,
     NewsType,
@@ -79,6 +80,10 @@ class NewsStream:
                 continue
             except asyncio.CancelledError:
                 break
+
+    def __aiter__(self) -> AsyncGenerator[NewsStreamResult[List[NewsV2]], None]:
+        """Allow ``async for result in stream`` directly over the stream."""
+        return self.receive()
 
     async def close(self) -> None:
         """Close the stream and cleanup resources."""
@@ -238,19 +243,40 @@ class NewsClient:
         news_type: Optional[NewsType] = None,
         news_order_by: Optional[NewsOrderBy] = None,
         direction: Optional[SortDirection] = None,
-        extra_filters: Optional[str] = None,
+        symbols: Optional[str] = None,
+        categories: Optional[str] = None,
+        sectors: Optional[str] = None,
+        industries: Optional[str] = None,
+        quality_score_min: Optional[int] = None,
+        quality_score_max: Optional[int] = None,
+        timestamp_from: Optional[str] = None,
+        timestamp_to: Optional[str] = None,
         page: int = 0,
         page_size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
     ) -> PaginatedResponse[NewsV2]:
         """Retrieve paginated news (v2).
 
+        Within a single filter, comma-separated values are OR-ed; different
+        filters are AND-ed together (e.g. ``(AAPL OR MSFT) AND Technology``).
+        The ``categories``, ``sectors`` and ``industries`` filters only accept
+        values returned by their respective listing endpoints
+        (``/api/v1/news/categories`` ``name``, ``/api/v1/sector`` ``title``,
+        ``/api/v1/industry`` ``title``).
+
         Args:
             locale: Locale code (e.g. "tr", "en")
             region: Region enum (e.g. Region.TR)
             news_type: Optional news type filter
-            news_order_by: Optional sorting field
+            news_order_by: Optional sorting field (timestamp, quality_score)
             direction: Optional sort direction
-            extra_filters: Optional extra filters (API-specific)
+            symbols: Optional comma-separated ticker symbols (e.g. "AAPL,MSFT")
+            categories: Optional comma-separated category names
+            sectors: Optional comma-separated sector titles
+            industries: Optional comma-separated industry titles
+            quality_score_min: Optional minimum quality score, inclusive (0-10)
+            quality_score_max: Optional maximum quality score, inclusive (0-10)
+            timestamp_from: Optional start date, inclusive (YYYY-MM-DD)
+            timestamp_to: Optional end date, inclusive (YYYY-MM-DD)
             page: Page number (default: 0)
             page_size: Page size enum (default: 10)
 
@@ -270,11 +296,50 @@ class NewsClient:
             params["orderBy"] = news_order_by.value
         if direction is not None:
             params["orderByDirection"] = direction.value
-        if extra_filters:
-            params["extraFilters"] = extra_filters
+        if symbols:
+            params["symbols"] = symbols
+        if categories:
+            params["categories"] = categories
+        if sectors:
+            params["sectors"] = sectors
+        if industries:
+            params["industries"] = industries
+        if quality_score_min is not None:
+            params["qualityScoreMin"] = quality_score_min
+        if quality_score_max is not None:
+            params["qualityScoreMax"] = quality_score_max
+        if timestamp_from:
+            params["timestampFrom"] = timestamp_from
+        if timestamp_to:
+            params["timestampTo"] = timestamp_to
 
         response = self._client.get("v2/news", params=params)
         return PaginatedResponse[NewsV2](**response)
+
+    def get_news_categories(
+        self,
+        locale: Optional[Locale] = None,
+    ) -> List[NewsCategoryListItem]:
+        """Retrieve the full canonical news category list.
+
+        Always returns every category regardless of whether it currently has
+        tagged news, ordered by id ascending. The returned ``name`` values are
+        the exact values accepted by the ``categories`` filter of
+        :meth:`get_news_v2` and :meth:`get_news_stream`.
+
+        Args:
+            locale: Optional language code ("tr", "en"). Defaults to "en";
+                any unsupported value falls back to "en".
+
+        Returns:
+            List of NewsCategoryListItem
+        """
+        params: Dict[str, object] = {}
+        if locale is not None:
+            params["locale"] = locale
+
+        response = self._client.get("v1/news/categories", params=params)
+        return [NewsCategoryListItem(**item) for item in response]
 
     def get_highlights(
         self,
