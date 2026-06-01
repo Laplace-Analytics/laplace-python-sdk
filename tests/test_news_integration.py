@@ -6,6 +6,7 @@ import pytest
 from laplace import LaplaceClient
 from laplace.models import (
     News,
+    NewsCategoryListItem,
     NewsHighlight,
     NewsType,
     NewsOrderBy,
@@ -227,7 +228,7 @@ class TestNewsUnit:
 
     @patch("httpx.Client")
     def test_get_news_with_extra_filters(self, mock_httpx_client):
-        """Test that extra_filters parameter is passed correctly."""
+        """Test that extra_filters parameter is passed correctly (v1)."""
         mock_response_data = {"recordCount": 0, "items": []}
 
         mock_client_instance = Mock()
@@ -244,6 +245,88 @@ class TestNewsUnit:
 
         call_params = mock_get.call_args
         assert call_params[1]["params"]["extraFilters"] == "symbol eq AAPL"
+
+    @patch("httpx.Client")
+    def test_get_news_v2_with_filters(self, mock_httpx_client):
+        """Test that the v2 individual filter parameters are passed correctly."""
+        mock_response_data = {"recordCount": 0, "items": []}
+
+        mock_client_instance = Mock()
+        mock_httpx_client.return_value = mock_client_instance
+
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "get", return_value=mock_response_data) as mock_get:
+            client.news.get_news_v2(
+                locale="en",
+                region=Region.US,
+                news_order_by=NewsOrderBy.QUALITY_SCORE,
+                direction=SortDirection.DESC,
+                symbols="AAPL,MSFT",
+                sectors="Technology",
+                categories="Sector News",
+                industries="Software",
+                quality_score_min=7,
+                quality_score_max=10,
+                timestamp_from="2026-05-01",
+                timestamp_to="2026-06-01",
+            )
+
+        path, kwargs = mock_get.call_args[0][0], mock_get.call_args[1]
+        params = kwargs["params"]
+        assert path == "v2/news"
+        assert params["orderBy"] == "quality_score"
+        assert params["orderByDirection"] == "desc"
+        assert params["symbols"] == "AAPL,MSFT"
+        assert params["sectors"] == "Technology"
+        assert params["categories"] == "Sector News"
+        assert params["industries"] == "Software"
+        assert params["qualityScoreMin"] == 7
+        assert params["qualityScoreMax"] == 10
+        assert params["timestampFrom"] == "2026-05-01"
+        assert params["timestampTo"] == "2026-06-01"
+        assert "extraFilters" not in params
+
+    @patch("httpx.Client")
+    def test_get_news_categories(self, mock_httpx_client):
+        """Test getting the canonical news category list."""
+        mock_response_data = [
+            {"id": "13702", "name": "General News"},
+            {"id": "13703", "name": "Sector News"},
+            {"id": "13704", "name": "Market News"},
+            {"id": "13705", "name": "Stock Spesific News"},
+        ]
+
+        mock_client_instance = Mock()
+        mock_httpx_client.return_value = mock_client_instance
+
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "get", return_value=mock_response_data) as mock_get:
+            categories = client.news.get_news_categories(locale="en")
+
+        path, kwargs = mock_get.call_args[0][0], mock_get.call_args[1]
+        assert path == "v1/news/categories"
+        assert kwargs["params"]["locale"] == "en"
+
+        assert len(categories) == 4
+        assert all(isinstance(c, NewsCategoryListItem) for c in categories)
+        assert categories[0].id == "13702"
+        assert categories[0].name == "General News"
+
+    @patch("httpx.Client")
+    def test_get_news_categories_without_locale(self, mock_httpx_client):
+        """Locale is optional and omitted from params when not provided."""
+        mock_response_data = [{"id": "13702", "name": "General News"}]
+
+        mock_httpx_client.return_value = Mock()
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "get", return_value=mock_response_data) as mock_get:
+            categories = client.news.get_news_categories()
+
+        assert "locale" not in mock_get.call_args[1]["params"]
+        assert categories[0].name == "General News"
 
     def test_news_client_does_not_inherit_base_client(self):
         """Test that NewsClient uses composition, not inheritance."""
