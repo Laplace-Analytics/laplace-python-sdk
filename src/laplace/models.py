@@ -847,6 +847,19 @@ class NewsOrderBy(str, Enum):
     QUALITY_SCORE = "quality_score"
 
 
+class NewsLane(str, Enum):
+    """News lane options for the filter-news and stream-news endpoints.
+
+    Lanes are surface-scoped: ``GLOBAL_MACRO`` and ``FAST_MOVERS`` belong to the
+    ``us`` region, while ``TR_EKONOMI`` and ``BIST`` belong to the ``tr`` region.
+    """
+
+    GLOBAL_MACRO = "global_macro"
+    TR_EKONOMI = "tr_ekonomi"
+    BIST = "bist"
+    FAST_MOVERS = "fast_movers"
+
+
 class NewsTicker(BaseModel):
     id: str
     name: str
@@ -891,6 +904,19 @@ class NewsCategoryListItem(BaseModel):
 
     id: str
     name: str
+
+    model_config = {"populate_by_name": True}
+
+
+class NewsLaneListItem(BaseModel):
+    """A news lane as returned by /api/v1/news/lanes.
+
+    The ``id`` is the exact value accepted by the ``lane`` filter of the
+    filter-news and stream-news endpoints (see :class:`NewsLane`).
+    """
+
+    id: str
+    label: str
 
     model_config = {"populate_by_name": True}
 

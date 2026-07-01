@@ -8,6 +8,8 @@ from laplace.models import (
     News,
     NewsCategoryListItem,
     NewsHighlight,
+    NewsLane,
+    NewsLaneListItem,
     NewsType,
     NewsOrderBy,
     Region,
@@ -247,6 +249,63 @@ class TestNewsUnit:
         assert call_params[1]["params"]["extraFilters"] == "symbol eq AAPL"
 
     @patch("httpx.Client")
+    def test_get_news_v1_with_lane_and_filters(self, mock_httpx_client):
+        """Test that v1 get_news forwards lane and the individual filters."""
+        mock_response_data = {"recordCount": 0, "items": []}
+
+        mock_httpx_client.return_value = Mock()
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "get", return_value=mock_response_data) as mock_get:
+            client.news.get_news(
+                locale="en",
+                region=Region.US,
+                lane=NewsLane.FAST_MOVERS,
+                symbols="AAPL",
+                categories="Technology",
+                sectors="Technology",
+                industries="Semiconductors",
+                quality_score_min=5,
+                quality_score_max=10,
+                timestamp_from="2026-06-01",
+                timestamp_to="2026-06-30",
+            )
+
+        path, kwargs = mock_get.call_args[0][0], mock_get.call_args[1]
+        params = kwargs["params"]
+        assert path == "v1/news"
+        assert params["lane"] == "fast_movers"
+        assert params["symbols"] == "AAPL"
+        assert params["categories"] == "Technology"
+        assert params["sectors"] == "Technology"
+        assert params["industries"] == "Semiconductors"
+        assert params["qualityScoreMin"] == 5
+        assert params["qualityScoreMax"] == 10
+        assert params["timestampFrom"] == "2026-06-01"
+        assert params["timestampTo"] == "2026-06-30"
+        assert "extraFilters" not in params
+
+    @patch("httpx.Client")
+    def test_get_news_v2_with_lane(self, mock_httpx_client):
+        """Test that v2 get_news_v2 forwards the lane filter."""
+        mock_response_data = {"recordCount": 0, "items": []}
+
+        mock_httpx_client.return_value = Mock()
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "get", return_value=mock_response_data) as mock_get:
+            client.news.get_news_v2(
+                locale="en",
+                region=Region.US,
+                lane=NewsLane.GLOBAL_MACRO,
+            )
+
+        path, kwargs = mock_get.call_args[0][0], mock_get.call_args[1]
+        params = kwargs["params"]
+        assert path == "v2/news"
+        assert params["lane"] == "global_macro"
+
+    @patch("httpx.Client")
     def test_get_news_v2_with_filters(self, mock_httpx_client):
         """Test that the v2 individual filter parameters are passed correctly."""
         mock_response_data = {"recordCount": 0, "items": []}
@@ -328,6 +387,44 @@ class TestNewsUnit:
         assert "locale" not in mock_get.call_args[1]["params"]
         assert categories[0].name == "General News"
 
+    @patch("httpx.Client")
+    def test_get_news_lanes(self, mock_httpx_client):
+        """Test getting the fixed news lane list."""
+        mock_response_data = [
+            {"id": "global_macro", "label": "Global Macro"},
+            {"id": "fast_movers", "label": "Fast Movers"},
+            {"id": "tr_ekonomi", "label": "TR Ekonomi"},
+            {"id": "bist", "label": "Borsa İstanbul"},
+        ]
+
+        mock_httpx_client.return_value = Mock()
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "get", return_value=mock_response_data) as mock_get:
+            lanes = client.news.get_news_lanes()
+
+        assert mock_get.call_args[0][0] == "v1/news/lanes"
+        assert len(lanes) == 4
+        assert all(isinstance(lane, NewsLaneListItem) for lane in lanes)
+        assert lanes[0].id == "global_macro"
+        assert lanes[0].label == "Global Macro"
+        # Every returned id maps onto the NewsLane enum accepted by the filters.
+        assert {lane.id for lane in lanes} == {lane.value for lane in NewsLane}
+
+    @patch("httpx.Client")
+    def test_get_news_api_source_names(self, mock_httpx_client):
+        """Test getting the distinct api_source values."""
+        mock_response_data = ["Reuters", "Bloomberg", "BBC", "MarketWatch"]
+
+        mock_httpx_client.return_value = Mock()
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "get", return_value=mock_response_data) as mock_get:
+            sources = client.news.get_news_api_source_names()
+
+        assert mock_get.call_args[0][0] == "v1/news/api-source-names"
+        assert sources == ["Reuters", "Bloomberg", "BBC", "MarketWatch"]
+
     def test_news_client_does_not_inherit_base_client(self):
         """Test that NewsClient uses composition, not inheritance."""
         from laplace.base import BaseClient
@@ -353,6 +450,7 @@ class TestNewsUnit:
             mock_client,
             "tr",
             Region.TR,
+            lane=NewsLane.BIST,
             sectors=["Technology", "Finance"],
             tickers=["AAPL", "MSFT"],
             categories=["Market"],
@@ -361,6 +459,7 @@ class TestNewsUnit:
         url = stream._build_stream_url()
         assert "locale=tr" in url
         assert "region=tr" in url
+        assert "lane=bist" in url
         assert "sectors=Technology%2CFinance" in url
         assert "tickers=AAPL%2CMSFT" in url
         assert "categories=Market" in url
