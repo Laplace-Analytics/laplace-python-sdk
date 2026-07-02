@@ -920,6 +920,20 @@ class NewsLaneListItem(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
+class NewsApiSourceListItem(BaseModel):
+    """A configured news source as returned by /api/v1/news/api-source-names.
+
+    The ``id`` is the exact value accepted by the ``apiSource`` filter of the
+    filter-news and stream-news endpoints (comma-separated for multiple);
+    ``name`` is the display name (e.g. "BBC Business").
+    """
+
+    id: str
+    name: str
+
+    model_config = {"populate_by_name": True}
+
 class NewsContent(BaseModel):
     title: str
     description: str

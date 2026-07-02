@@ -6,6 +6,7 @@ import pytest
 from laplace import LaplaceClient
 from laplace.models import (
     News,
+    NewsApiSourceListItem,
     NewsCategoryListItem,
     NewsHighlight,
     NewsLane,
@@ -261,6 +262,7 @@ class TestNewsUnit:
                 locale="en",
                 region=Region.US,
                 lane=NewsLane.FAST_MOVERS,
+                api_source="BBCBusiness,MarketWatch",
                 symbols="AAPL",
                 categories="Technology",
                 sectors="Technology",
@@ -275,6 +277,7 @@ class TestNewsUnit:
         params = kwargs["params"]
         assert path == "v1/news"
         assert params["lane"] == "fast_movers"
+        assert params["apiSource"] == "BBCBusiness,MarketWatch"
         assert params["symbols"] == "AAPL"
         assert params["categories"] == "Technology"
         assert params["sectors"] == "Technology"
@@ -298,12 +301,14 @@ class TestNewsUnit:
                 locale="en",
                 region=Region.US,
                 lane=NewsLane.GLOBAL_MACRO,
+                api_source="BBCBusiness",
             )
 
         path, kwargs = mock_get.call_args[0][0], mock_get.call_args[1]
         params = kwargs["params"]
         assert path == "v2/news"
         assert params["lane"] == "global_macro"
+        assert params["apiSource"] == "BBCBusiness"
 
     @patch("httpx.Client")
     def test_get_news_v2_with_filters(self, mock_httpx_client):
@@ -413,8 +418,12 @@ class TestNewsUnit:
 
     @patch("httpx.Client")
     def test_get_news_api_source_names(self, mock_httpx_client):
-        """Test getting the distinct api_source values."""
-        mock_response_data = ["Reuters", "Bloomberg", "BBC", "MarketWatch"]
+        """Test getting the configured news sources."""
+        mock_response_data = [
+            {"id": "BBCBusiness", "name": "BBC Business"},
+            {"id": "MarketWatch", "name": "MarketWatch"},
+            {"id": "GazeteOksijen", "name": "Gazete Oksijen"},
+        ]
 
         mock_httpx_client.return_value = Mock()
         client = LaplaceClient(api_key="test-key")
@@ -423,7 +432,31 @@ class TestNewsUnit:
             sources = client.news.get_news_api_source_names()
 
         assert mock_get.call_args[0][0] == "v1/news/api-source-names"
-        assert sources == ["Reuters", "Bloomberg", "BBC", "MarketWatch"]
+        assert len(sources) == 3
+        assert all(isinstance(source, NewsApiSourceListItem) for source in sources)
+        assert sources[0].id == "BBCBusiness"
+        assert sources[0].name == "BBC Business"
+
+    @pytest.mark.asyncio
+    async def test_get_news_stream_forwards_filters(self):
+        """get_news_stream passes every filter kwarg through to NewsStream."""
+        from unittest.mock import AsyncMock
+
+        client = LaplaceClient(api_key="test-key")
+
+        with patch("laplace.news.NewsStream.subscribe", new_callable=AsyncMock) as mock_subscribe:
+            stream = await client.news.get_news_stream(
+                locale="en",
+                region=Region.US,
+                lane=NewsLane.FAST_MOVERS,
+                tickers=["AAPL"],
+                api_sources=["BBCBusiness", "MarketWatch"],
+            )
+
+        mock_subscribe.assert_awaited_once()
+        assert stream.lane == NewsLane.FAST_MOVERS
+        assert stream.tickers == ["AAPL"]
+        assert stream.api_sources == ["BBCBusiness", "MarketWatch"]
 
     def test_news_client_does_not_inherit_base_client(self):
         """Test that NewsClient uses composition, not inheritance."""
@@ -454,7 +487,8 @@ class TestNewsUnit:
             sectors=["Technology", "Finance"],
             tickers=["AAPL", "MSFT"],
             categories=["Market"],
-            industries=["Software"]
+            industries=["Software"],
+            api_sources=["BBCBusiness", "MarketWatch"],
         )
         url = stream._build_stream_url()
         assert "locale=tr" in url
@@ -464,6 +498,7 @@ class TestNewsUnit:
         assert "tickers=AAPL%2CMSFT" in url
         assert "categories=Market" in url
         assert "industries=Software" in url
+        assert "apiSource=BBCBusiness%2CMarketWatch" in url
 
 
 class TestNewsIntegration:

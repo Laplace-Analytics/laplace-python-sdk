@@ -11,6 +11,7 @@ from .models import (
     Locale,
     News,
     NewsV2,
+    NewsApiSourceListItem,
     NewsCategoryListItem,
     NewsHighlight,
     NewsLane,
@@ -50,6 +51,7 @@ class NewsStream:
         tickers: Optional[List[str]] = None,
         categories: Optional[List[str]] = None,
         industries: Optional[List[str]] = None,
+        api_sources: Optional[List[str]] = None,
     ):
         self.base_client = base_client
         self.locale = locale
@@ -59,6 +61,7 @@ class NewsStream:
         self.tickers = tickers
         self.categories = categories
         self.industries = industries
+        self.api_sources = api_sources
         self._task: Optional[asyncio.Task] = None
         self._queue: Optional[asyncio.Queue[NewsStreamResult[List[NewsV2]]]] = None
         self._is_closed = False
@@ -120,6 +123,8 @@ class NewsStream:
             params["categories"] = ",".join(self.categories)
         if self.industries:
             params["industries"] = ",".join(self.industries)
+        if self.api_sources:
+            params["apiSource"] = ",".join(self.api_sources)
 
         query_string = urllib.parse.urlencode(params)
         return f"{url}?{query_string}"
@@ -205,6 +210,7 @@ class NewsClient:
         news_order_by: Optional[NewsOrderBy] = None,
         direction: Optional[SortDirection] = None,
         lane: Optional[NewsLane] = None,
+        api_source: Optional[str] = None,
         symbols: Optional[str] = None,
         categories: Optional[str] = None,
         sectors: Optional[str] = None,
@@ -234,6 +240,8 @@ class NewsClient:
             direction: Optional sort direction
             lane: Optional lane filter. Lanes are region-scoped: US lanes are
                 GLOBAL_MACRO and FAST_MOVERS; TR lanes are TR_EKONOMI and BIST.
+            api_source: Optional comma-separated source ids from
+                :meth:`get_news_api_source_names` (e.g. "BBCBusiness,MarketWatch")
             symbols: Optional comma-separated ticker symbols (e.g. "AAPL,MSFT")
             categories: Optional comma-separated category names
             sectors: Optional comma-separated sector titles
@@ -264,6 +272,8 @@ class NewsClient:
             params["orderByDirection"] = direction.value
         if lane is not None:
             params["lane"] = lane.value
+        if api_source:
+            params["apiSource"] = api_source
         if symbols:
             params["symbols"] = symbols
         if categories:
@@ -294,6 +304,7 @@ class NewsClient:
         news_order_by: Optional[NewsOrderBy] = None,
         direction: Optional[SortDirection] = None,
         lane: Optional[NewsLane] = None,
+        api_source: Optional[str] = None,
         symbols: Optional[str] = None,
         categories: Optional[str] = None,
         sectors: Optional[str] = None,
@@ -322,6 +333,8 @@ class NewsClient:
             direction: Optional sort direction
             lane: Optional lane filter. Lanes are region-scoped: US lanes are
                 GLOBAL_MACRO and FAST_MOVERS; TR lanes are TR_EKONOMI and BIST.
+            api_source: Optional comma-separated source ids from
+                :meth:`get_news_api_source_names` (e.g. "BBCBusiness,MarketWatch")
             symbols: Optional comma-separated ticker symbols (e.g. "AAPL,MSFT")
             categories: Optional comma-separated category names
             sectors: Optional comma-separated sector titles
@@ -351,6 +364,8 @@ class NewsClient:
             params["orderByDirection"] = direction.value
         if lane is not None:
             params["lane"] = lane.value
+        if api_source:
+            params["apiSource"] = api_source
         if symbols:
             params["symbols"] = symbols
         if categories:
@@ -410,14 +425,21 @@ class NewsClient:
         response = self._client.get("v1/news/lanes")
         return [NewsLaneListItem(**item) for item in response]
 
-    def get_news_api_source_names(self) -> List[str]:
-        """Retrieve the distinct ``api_source`` values present upstream.
+    def get_news_api_source_names(self) -> List[NewsApiSourceListItem]:
+        """Retrieve the configured news sources.
+
+        Returns every source (``id`` + ``name``), registry sources first, then
+        any legacy sources still on old rows. The returned ``id`` values are
+        the exact values accepted by the ``api_source`` filter of
+        :meth:`get_news` and :meth:`get_news_v2` and the ``api_sources``
+        filter of :meth:`get_news_stream`; ``name`` is the display name
+        (e.g. "BBC Business").
 
         Returns:
-            List of api source name strings
+            List of NewsApiSourceListItem
         """
         response = self._client.get("v1/news/api-source-names")
-        return list(response)
+        return [NewsApiSourceListItem(**item) for item in response]
 
     def get_highlights(
         self,
@@ -450,6 +472,7 @@ class NewsClient:
         tickers: Optional[List[str]] = None,
         categories: Optional[List[str]] = None,
         industries: Optional[List[str]] = None,
+        api_sources: Optional[List[str]] = None,
     ) -> NewsStream:
         """Start streaming news updates.
 
@@ -462,6 +485,9 @@ class NewsClient:
             tickers: Optional list of tickers (stream uses tickers, not symbols)
             categories: Optional list of categories
             industries: Optional list of industries
+            api_sources: Optional list of source ids from
+                :meth:`get_news_api_source_names`; only these sources are
+                streamed
 
         Returns:
             NewsStream for consuming news items
@@ -475,6 +501,7 @@ class NewsClient:
             tickers=tickers,
             categories=categories,
             industries=industries,
+            api_sources=api_sources,
         )
         await stream.subscribe()
         return stream
