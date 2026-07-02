@@ -11,8 +11,11 @@ from .models import (
     Locale,
     News,
     NewsV2,
+    NewsApiSourceListItem,
     NewsCategoryListItem,
     NewsHighlight,
+    NewsLane,
+    NewsLaneListItem,
     NewsOrderBy,
     NewsType,
     PaginatedResponse,
@@ -43,18 +46,22 @@ class NewsStream:
         base_client: BaseClient,
         locale: Locale,
         region: Region,
+        lane: Optional[NewsLane] = None,
         sectors: Optional[List[str]] = None,
         tickers: Optional[List[str]] = None,
         categories: Optional[List[str]] = None,
         industries: Optional[List[str]] = None,
+        api_sources: Optional[List[str]] = None,
     ):
         self.base_client = base_client
         self.locale = locale
         self.region = region
+        self.lane = lane
         self.sectors = sectors
         self.tickers = tickers
         self.categories = categories
         self.industries = industries
+        self.api_sources = api_sources
         self._task: Optional[asyncio.Task] = None
         self._queue: Optional[asyncio.Queue[NewsStreamResult[List[NewsV2]]]] = None
         self._is_closed = False
@@ -106,6 +113,8 @@ class NewsStream:
         """Build the streaming URL for the news endpoint."""
         url = f"{self.base_client.base_url}/v1/news/stream"
         params = {"locale": self.locale, "region": self.region.value}
+        if self.lane is not None:
+            params["lane"] = self.lane.value
         if self.sectors:
             params["sectors"] = ",".join(self.sectors)
         if self.tickers:
@@ -114,6 +123,8 @@ class NewsStream:
             params["categories"] = ",".join(self.categories)
         if self.industries:
             params["industries"] = ",".join(self.industries)
+        if self.api_sources:
+            params["apiSource"] = ",".join(self.api_sources)
 
         query_string = urllib.parse.urlencode(params)
         return f"{url}?{query_string}"
@@ -198,18 +209,47 @@ class NewsClient:
         news_type: Optional[NewsType] = None,
         news_order_by: Optional[NewsOrderBy] = None,
         direction: Optional[SortDirection] = None,
+        lane: Optional[NewsLane] = None,
+        api_source: Optional[str] = None,
+        symbols: Optional[str] = None,
+        categories: Optional[str] = None,
+        sectors: Optional[str] = None,
+        industries: Optional[str] = None,
+        quality_score_min: Optional[int] = None,
+        quality_score_max: Optional[int] = None,
+        timestamp_from: Optional[str] = None,
+        timestamp_to: Optional[str] = None,
         extra_filters: Optional[str] = None,
         page: int = 0,
         page_size: PaginationPageSize = PaginationPageSize.PAGE_SIZE_10,
     ) -> PaginatedResponse[News]:
         """Retrieve paginated news.
 
+        Within a single filter, comma-separated values are OR-ed; different
+        filters are AND-ed together (e.g. ``(AAPL OR MSFT) AND Technology``).
+        The ``categories``, ``sectors`` and ``industries`` filters only accept
+        values returned by their respective listing endpoints
+        (``/api/v1/news/categories`` ``name``, ``/api/v1/sector`` ``title``,
+        ``/api/v1/industry`` ``title``).
+
         Args:
             locale: Locale code (e.g. "tr", "en")
             region: Region enum (e.g. Region.TR)
             news_type: Optional news type filter
-            news_order_by: Optional sorting field
+            news_order_by: Optional sorting field (timestamp, quality_score)
             direction: Optional sort direction
+            lane: Optional lane filter. Lanes are region-scoped: US lanes are
+                GLOBAL_MACRO and FAST_MOVERS; TR lanes are TR_EKONOMI and BIST.
+            api_source: Optional comma-separated source ids from
+                :meth:`get_news_api_source_names` (e.g. "BBCBusiness,MarketWatch")
+            symbols: Optional comma-separated ticker symbols (e.g. "AAPL,MSFT")
+            categories: Optional comma-separated category names
+            sectors: Optional comma-separated sector titles
+            industries: Optional comma-separated industry titles
+            quality_score_min: Optional minimum quality score, inclusive (0-10)
+            quality_score_max: Optional maximum quality score, inclusive (0-10)
+            timestamp_from: Optional start date, inclusive (YYYY-MM-DD)
+            timestamp_to: Optional end date, inclusive (YYYY-MM-DD)
             extra_filters: Optional extra filters (API-specific)
             page: Page number (default: 0)
             page_size: Page size enum (default: 10)
@@ -230,6 +270,26 @@ class NewsClient:
             params["orderBy"] = news_order_by.value
         if direction is not None:
             params["orderByDirection"] = direction.value
+        if lane is not None:
+            params["lane"] = lane.value
+        if api_source:
+            params["apiSource"] = api_source
+        if symbols:
+            params["symbols"] = symbols
+        if categories:
+            params["categories"] = categories
+        if sectors:
+            params["sectors"] = sectors
+        if industries:
+            params["industries"] = industries
+        if quality_score_min is not None:
+            params["qualityScoreMin"] = quality_score_min
+        if quality_score_max is not None:
+            params["qualityScoreMax"] = quality_score_max
+        if timestamp_from:
+            params["timestampFrom"] = timestamp_from
+        if timestamp_to:
+            params["timestampTo"] = timestamp_to
         if extra_filters:
             params["extraFilters"] = extra_filters
 
@@ -243,6 +303,8 @@ class NewsClient:
         news_type: Optional[NewsType] = None,
         news_order_by: Optional[NewsOrderBy] = None,
         direction: Optional[SortDirection] = None,
+        lane: Optional[NewsLane] = None,
+        api_source: Optional[str] = None,
         symbols: Optional[str] = None,
         categories: Optional[str] = None,
         sectors: Optional[str] = None,
@@ -269,6 +331,10 @@ class NewsClient:
             news_type: Optional news type filter
             news_order_by: Optional sorting field (timestamp, quality_score)
             direction: Optional sort direction
+            lane: Optional lane filter. Lanes are region-scoped: US lanes are
+                GLOBAL_MACRO and FAST_MOVERS; TR lanes are TR_EKONOMI and BIST.
+            api_source: Optional comma-separated source ids from
+                :meth:`get_news_api_source_names` (e.g. "BBCBusiness,MarketWatch")
             symbols: Optional comma-separated ticker symbols (e.g. "AAPL,MSFT")
             categories: Optional comma-separated category names
             sectors: Optional comma-separated sector titles
@@ -296,6 +362,10 @@ class NewsClient:
             params["orderBy"] = news_order_by.value
         if direction is not None:
             params["orderByDirection"] = direction.value
+        if lane is not None:
+            params["lane"] = lane.value
+        if api_source:
+            params["apiSource"] = api_source
         if symbols:
             params["symbols"] = symbols
         if categories:
@@ -341,6 +411,36 @@ class NewsClient:
         response = self._client.get("v1/news/categories", params=params)
         return [NewsCategoryListItem(**item) for item in response]
 
+    def get_news_lanes(self) -> List[NewsLaneListItem]:
+        """Retrieve the fixed news lane list.
+
+        Returns every lane (``id`` + ``label``) for building a lane filter. The
+        returned ``id`` values are the exact values accepted by the ``lane``
+        filter of :meth:`get_news`, :meth:`get_news_v2` and
+        :meth:`get_news_stream` (see :class:`~laplace.models.NewsLane`).
+
+        Returns:
+            List of NewsLaneListItem
+        """
+        response = self._client.get("v1/news/lanes")
+        return [NewsLaneListItem(**item) for item in response]
+
+    def get_news_api_source_names(self) -> List[NewsApiSourceListItem]:
+        """Retrieve the configured news sources.
+
+        Returns every source (``id`` + ``name``), registry sources first, then
+        any legacy sources still on old rows. The returned ``id`` values are
+        the exact values accepted by the ``api_source`` filter of
+        :meth:`get_news` and :meth:`get_news_v2` and the ``api_sources``
+        filter of :meth:`get_news_stream`; ``name`` is the display name
+        (e.g. "BBC Business").
+
+        Returns:
+            List of NewsApiSourceListItem
+        """
+        response = self._client.get("v1/news/api-source-names")
+        return [NewsApiSourceListItem(**item) for item in response]
+
     def get_highlights(
         self,
         locale: Locale,
@@ -367,20 +467,27 @@ class NewsClient:
         self,
         locale: Locale,
         region: Region,
+        lane: Optional[NewsLane] = None,
         sectors: Optional[List[str]] = None,
         tickers: Optional[List[str]] = None,
         categories: Optional[List[str]] = None,
         industries: Optional[List[str]] = None,
+        api_sources: Optional[List[str]] = None,
     ) -> NewsStream:
         """Start streaming news updates.
 
         Args:
             locale: Locale code (e.g., "tr", "en")
             region: Region enum (e.g. Region.TR)
+            lane: Optional lane filter. Lanes are region-scoped: US lanes are
+                GLOBAL_MACRO and FAST_MOVERS; TR lanes are TR_EKONOMI and BIST.
             sectors: Optional list of sectors
-            tickers: Optional list of tickers
+            tickers: Optional list of tickers (stream uses tickers, not symbols)
             categories: Optional list of categories
             industries: Optional list of industries
+            api_sources: Optional list of source ids from
+                :meth:`get_news_api_source_names`; only these sources are
+                streamed
 
         Returns:
             NewsStream for consuming news items
@@ -389,10 +496,12 @@ class NewsClient:
             self._client,
             locale,
             region,
+            lane=lane,
             sectors=sectors,
             tickers=tickers,
             categories=categories,
             industries=industries,
+            api_sources=api_sources,
         )
         await stream.subscribe()
         return stream
