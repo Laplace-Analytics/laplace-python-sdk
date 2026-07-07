@@ -31,6 +31,7 @@ class TestNewsUnit:
             "recordCount": 352,
             "items": [
                 {
+                    "id": "a1c9e2f4-3b7d-4e81-9f26-0c5d8a1b2e3f",
                     "url": "https://www.reuters.com/business/energy/commonwealth-lng-wants-more-time-build-planned-export-facility-louisiana-2025-10-07/",
                     "content": {
                         "title": "Commonwealth LNG wants more time to build planned export facility in Louisiana",
@@ -46,9 +47,8 @@ class TestNewsUnit:
                         "investorInsight": "What it means for investors: The extension request could postpone the start of export revenues and delay expected cash flows.",
                     },
                     "sectors": {
+                        "id": "65533e047844ee7afe9941bf",
                         "name": "Energy",
-                        "meanType": 9,
-                        "newsCount": 1,
                     },
                     "tickers": [
                         {
@@ -65,23 +65,16 @@ class TestNewsUnit:
                     },
                     "timestamp": "2025-10-07T16:50:16Z",
                     "categories": {
+                        "id": "3",
                         "name": "Sector News",
-                        "newsCount": 1,
                         "categoryType": "StockSpesific",
                     },
                     "industries": {
+                        "id": "65533e441fa5c7b58afa0944",
                         "name": "Oil/Gas (Production and Exploration)",
-                        "meanType": 78,
                     },
                     "publisherUrl": "Reuters",
                     "qualityScore": 0,
-                    "relatedTickers": [
-                        {
-                            "id": "6203d1ba1e674875275558f7",
-                            "name": "EQT Corp",
-                            "symbol": "EQT",
-                        }
-                    ],
                 }
             ],
         }
@@ -106,6 +99,7 @@ class TestNewsUnit:
         assert all(isinstance(item, News) for item in response.items)
 
         news = response.items[0]
+        assert news.id == "a1c9e2f4-3b7d-4e81-9f26-0c5d8a1b2e3f"
         assert isinstance(news.created_at, datetime)
         assert news.url == "https://www.reuters.com/business/energy/commonwealth-lng-wants-more-time-build-planned-export-facility-louisiana-2025-10-07/"
         assert news.image_url == ""
@@ -121,15 +115,17 @@ class TestNewsUnit:
         assert len(news.content.summary) == 2
         assert news.content.investor_insight.startswith("What it means for investors:")
 
-        assert len(news.related_tickers) == 1
-        assert news.related_tickers[0].symbol == "EQT"
+        assert news.related_tickers is None
         assert len(news.tickers) == 1
         assert news.tickers[0].name == "EQT Corp"
 
-        assert news.categories.news_count == 1
+        assert news.categories.id == "3"
+        assert news.categories.name == "Sector News"
         assert news.categories.category_type == "StockSpesific"
-        assert news.sectors.mean_type == 9 
-        assert news.industries.mean_type == 78 
+        assert news.sectors.id == "65533e047844ee7afe9941bf"
+        assert news.sectors.name == "Energy"
+        assert news.industries.id == "65533e441fa5c7b58afa0944"
+        assert news.industries.name == "Oil/Gas (Production and Exploration)"
 
     @patch("httpx.Client")
     def test_get_news_with_filters(self, mock_httpx_client):
@@ -138,6 +134,7 @@ class TestNewsUnit:
             "recordCount": 1,
             "items": [
                 {
+                    "id": "68e5389a1d3f2b7c4a9e0f34",
                     "createdAt": "2025-07-15T10:00:00.000Z",
                     "url": "https://example.com/news/1",
                     "imageUrl": "https://example.com/img/1.jpg",
@@ -606,6 +603,7 @@ class TestNewsIntegration:
 
         if response.items:
             for item in response.items:
+                assert item.id
                 assert isinstance(item.created_at, datetime)
                 assert item.url
                 assert item.image_url is not None

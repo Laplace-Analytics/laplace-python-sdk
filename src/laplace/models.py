@@ -874,24 +874,21 @@ class NewsPublisher(BaseModel):
     model_config = {"populate_by_name": True}
 
 class NewsIndustry(BaseModel):
+    id: str
     name: str
-    mean_type: int = Field(alias="meanType")
 
     model_config = {"populate_by_name": True}
 
 class NewsSector(BaseModel):
+    id: str
     name: str
-    news_count: int = Field(alias="newsCount")
-    category_type: Optional[str] = Field(alias="categoryType", default=None)
-    mean_type: Optional[int] = Field(alias="meanType", default=None)
 
     model_config = {"populate_by_name": True}
 
 class NewsCategory(BaseModel):
+    id: str
     name: str
-    news_count: int = Field(alias="newsCount")
     category_type: Optional[str] = Field(alias="categoryType", default=None)
-    mean_type: Optional[int] = Field(alias="meanType", default=None)
 
     model_config = {"populate_by_name": True}
 
@@ -945,6 +942,7 @@ class NewsContent(BaseModel):
     model_config = {"populate_by_name": True}
 
 class News(BaseModel):
+    id: str
     created_at: datetime = Field(alias="createdAt")
     url: str
     image_url: str = Field(alias="imageUrl")
@@ -952,7 +950,7 @@ class News(BaseModel):
     publisher_url: str = Field(alias="publisherUrl")
 
     publisher: NewsPublisher
-    related_tickers: List[NewsTicker] = Field(alias="relatedTickers")
+    related_tickers: Optional[List[NewsTicker]] = Field(alias="relatedTickers", default=None)
 
     tickers: Optional[List[NewsTicker]] = None
     categories: Optional[NewsCategory] = None
@@ -965,6 +963,7 @@ class News(BaseModel):
     model_config = {"populate_by_name": True}
 
 class NewsV2(BaseModel):
+    id: str
     created_at: datetime = Field(alias="createdAt")
     url: str
     image_url: str = Field(alias="imageUrl")
