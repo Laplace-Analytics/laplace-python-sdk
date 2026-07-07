@@ -898,8 +898,9 @@ class NewsCategory(BaseModel):
 class NewsCategoryListItem(BaseModel):
     """A canonical news category as returned by /api/v1/news/categories.
 
-    The ``name`` is the exact value accepted by the ``categories`` filter of the
-    News V2 and Live News Stream endpoints.
+    The numeric ``id`` is the exact value accepted by the ``categoryIds``
+    filter of the filter-news and stream-news endpoints; ``name`` is the
+    display name for dropdowns.
     """
 
     id: str
@@ -982,6 +983,10 @@ class NewsV2(BaseModel):
 
     model_config = {"populate_by_name": True}
 class NewsHighlight(BaseModel):
+    """A daily categorized news highlight as returned by /api/v1/news/highlights."""
+
+    id: str
+    created_at: datetime = Field(alias="createdAt")
     consumer: List[str]
     energy_and_utilities: List[str] = Field(alias="energyAndUtilities")
     finance: List[str]
