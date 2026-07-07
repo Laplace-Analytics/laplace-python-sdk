@@ -178,8 +178,10 @@ class TestNewsUnit:
 
     @patch("httpx.Client")
     def test_get_highlights(self, mock_httpx_client):
-        """Test getting news highlights with real API response."""
-        mock_response_data = {
+        """Test getting paginated news highlights with real API response."""
+        mock_highlight_item = {
+            "id": "66b1f0a3c9d4e8f7a1b2c3d4",
+            "createdAt": "2026-07-06T06:00:00.000Z",
             "tech": [
                 "Alphabet ve Amazon'un desteğiyle Anthropic, 2026 başlarında Hindistan'ın Bengaluru kentinde bir ofis açacak.",
                 "Elon Musk'ın xAI'si, GPU kullanımıyla bağlantılı olarak Nvidia yatırımıyla 20 milyar dolar finansman hedefliyor.",
@@ -208,6 +210,10 @@ class TestNewsUnit:
                 "Airbus A320, güçlü satışlardan faydalanarak teslimat sayısında Boeing 737'yi geride bıraktı.",
             ],
         }
+        mock_response_data = {
+            "recordCount": 42,
+            "items": [mock_highlight_item],
+        }
 
         mock_client_instance = Mock()
         mock_client_instance.get.return_value = MockResponse(mock_response_data)
@@ -216,11 +222,18 @@ class TestNewsUnit:
         client = LaplaceClient(api_key="test-key")
 
         with patch.object(client, "get", return_value=mock_response_data):
-            highlights = client.news.get_highlights(
+            response = client.news.get_highlights(
                 locale="tr", region=Region.US
             )
 
+        assert isinstance(response, PaginatedResponse)
+        assert response.record_count == 42
+        assert len(response.items) == 1
+
+        highlights = response.items[0]
         assert isinstance(highlights, NewsHighlight)
+        assert highlights.id == "66b1f0a3c9d4e8f7a1b2c3d4"
+        assert isinstance(highlights.created_at, datetime)
         assert len(highlights.tech) == 3
         assert len(highlights.other) == 2
         assert len(highlights.finance) == 2
@@ -228,6 +241,32 @@ class TestNewsUnit:
         assert len(highlights.healthcare) == 1
         assert len(highlights.energy_and_utilities) == 2
         assert len(highlights.industrials_and_materials) == 2
+
+    @patch("httpx.Client")
+    def test_get_highlights_with_date_range_and_paging(self, mock_httpx_client):
+        """Test that highlights date-range and paging params use the spec'd wire keys."""
+        mock_response_data = {"recordCount": 0, "items": []}
+
+        mock_httpx_client.return_value = Mock()
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "get", return_value=mock_response_data) as mock_get:
+            client.news.get_highlights(
+                locale="en",
+                region=Region.US,
+                from_date="2026-06-01",
+                to_date="2026-07-01",
+                skip=0,
+                top=20,
+            )
+
+        path, kwargs = mock_get.call_args[0][0], mock_get.call_args[1]
+        params = kwargs["params"]
+        assert path == "v1/news/highlights"
+        assert params["from"] == "2026-06-01"
+        assert params["to"] == "2026-07-01"
+        assert params["skip"] == 0
+        assert params["top"] == 20
 
     @patch("httpx.Client")
     def test_get_news_with_extra_filters(self, mock_httpx_client):
@@ -264,9 +303,9 @@ class TestNewsUnit:
                 lane=NewsLane.FAST_MOVERS,
                 api_source="BBCBusiness,MarketWatch",
                 symbols="AAPL",
-                categories="Technology",
-                sectors="Technology",
-                industries="Semiconductors",
+                category_ids="1,3",
+                sector_ids="65533e047844ee7afe9941bf",
+                industry_ids="65533e441fa5c7b58afa0944",
                 quality_score_min=5,
                 quality_score_max=10,
                 timestamp_from="2026-06-01",
@@ -279,14 +318,17 @@ class TestNewsUnit:
         assert params["lane"] == "fast_movers"
         assert params["apiSource"] == "BBCBusiness,MarketWatch"
         assert params["symbols"] == "AAPL"
-        assert params["categories"] == "Technology"
-        assert params["sectors"] == "Technology"
-        assert params["industries"] == "Semiconductors"
+        assert params["categoryIds"] == "1,3"
+        assert params["sectorIds"] == "65533e047844ee7afe9941bf"
+        assert params["industryIds"] == "65533e441fa5c7b58afa0944"
         assert params["qualityScoreMin"] == 5
         assert params["qualityScoreMax"] == 10
         assert params["timestampFrom"] == "2026-06-01"
         assert params["timestampTo"] == "2026-06-30"
         assert "extraFilters" not in params
+        assert "categories" not in params
+        assert "sectors" not in params
+        assert "industries" not in params
 
     @patch("httpx.Client")
     def test_get_news_v2_with_lane(self, mock_httpx_client):
@@ -327,9 +369,9 @@ class TestNewsUnit:
                 news_order_by=NewsOrderBy.QUALITY_SCORE,
                 direction=SortDirection.DESC,
                 symbols="AAPL,MSFT",
-                sectors="Technology",
-                categories="Sector News",
-                industries="Software",
+                category_ids="1",
+                sector_ids="65533e047844ee7afe9941bf",
+                industry_ids="65533e441fa5c7b58afa0944",
                 quality_score_min=7,
                 quality_score_max=10,
                 timestamp_from="2026-05-01",
@@ -342,14 +384,17 @@ class TestNewsUnit:
         assert params["orderBy"] == "quality_score"
         assert params["orderByDirection"] == "desc"
         assert params["symbols"] == "AAPL,MSFT"
-        assert params["sectors"] == "Technology"
-        assert params["categories"] == "Sector News"
-        assert params["industries"] == "Software"
+        assert params["categoryIds"] == "1"
+        assert params["sectorIds"] == "65533e047844ee7afe9941bf"
+        assert params["industryIds"] == "65533e441fa5c7b58afa0944"
         assert params["qualityScoreMin"] == 7
         assert params["qualityScoreMax"] == 10
         assert params["timestampFrom"] == "2026-05-01"
         assert params["timestampTo"] == "2026-06-01"
         assert "extraFilters" not in params
+        assert "categories" not in params
+        assert "sectors" not in params
+        assert "industries" not in params
 
     @patch("httpx.Client")
     def test_get_news_categories(self, mock_httpx_client):
@@ -409,12 +454,30 @@ class TestNewsUnit:
             lanes = client.news.get_news_lanes()
 
         assert mock_get.call_args[0][0] == "v1/news/lanes"
+        assert "region" not in mock_get.call_args[1]["params"]
         assert len(lanes) == 4
         assert all(isinstance(lane, NewsLaneListItem) for lane in lanes)
         assert lanes[0].id == "global_macro"
         assert lanes[0].label == "Global Macro"
         # Every returned id maps onto the NewsLane enum accepted by the filters.
         assert {lane.id for lane in lanes} == {lane.value for lane in NewsLane}
+
+    @patch("httpx.Client")
+    def test_get_news_lanes_with_region(self, mock_httpx_client):
+        """Region narrows the lane list to lanes valid for that region."""
+        mock_response_data = [
+            {"id": "global_macro", "label": "Global Macro"},
+            {"id": "fast_movers", "label": "Fast Movers"},
+        ]
+
+        mock_httpx_client.return_value = Mock()
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "get", return_value=mock_response_data) as mock_get:
+            lanes = client.news.get_news_lanes(region=Region.US)
+
+        assert mock_get.call_args[1]["params"]["region"] == "us"
+        assert len(lanes) == 2
 
     @patch("httpx.Client")
     def test_get_news_api_source_names(self, mock_httpx_client):
@@ -432,10 +495,29 @@ class TestNewsUnit:
             sources = client.news.get_news_api_source_names()
 
         assert mock_get.call_args[0][0] == "v1/news/api-source-names"
+        assert mock_get.call_args[1]["params"] == {}
         assert len(sources) == 3
         assert all(isinstance(source, NewsApiSourceListItem) for source in sources)
         assert sources[0].id == "BBCBusiness"
         assert sources[0].name == "BBC Business"
+
+    @patch("httpx.Client")
+    def test_get_news_api_source_names_with_filters(self, mock_httpx_client):
+        """Region and language narrow the source list."""
+        mock_response_data = [{"id": "GazeteOksijen", "name": "Gazete Oksijen"}]
+
+        mock_httpx_client.return_value = Mock()
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "get", return_value=mock_response_data) as mock_get:
+            sources = client.news.get_news_api_source_names(
+                region=Region.TR, language="tr"
+            )
+
+        params = mock_get.call_args[1]["params"]
+        assert params["region"] == "tr"
+        assert params["language"] == "tr"
+        assert sources[0].id == "GazeteOksijen"
 
     @pytest.mark.asyncio
     async def test_get_news_stream_forwards_filters(self):
@@ -449,13 +531,15 @@ class TestNewsUnit:
                 locale="en",
                 region=Region.US,
                 lane=NewsLane.FAST_MOVERS,
-                tickers=["AAPL"],
+                symbols=["AAPL"],
+                category_ids=["1"],
                 api_sources=["BBCBusiness", "MarketWatch"],
             )
 
         mock_subscribe.assert_awaited_once()
         assert stream.lane == NewsLane.FAST_MOVERS
-        assert stream.tickers == ["AAPL"]
+        assert stream.symbols == ["AAPL"]
+        assert stream.category_ids == ["1"]
         assert stream.api_sources == ["BBCBusiness", "MarketWatch"]
 
     def test_news_client_does_not_inherit_base_client(self):
@@ -484,21 +568,22 @@ class TestNewsUnit:
             "tr",
             Region.TR,
             lane=NewsLane.BIST,
-            sectors=["Technology", "Finance"],
-            tickers=["AAPL", "MSFT"],
-            categories=["Market"],
-            industries=["Software"],
+            symbols=["AAPL", "MSFT"],
+            category_ids=["1", "3"],
+            sector_ids=["65533e047844ee7afe9941bf"],
+            industry_ids=["65533e441fa5c7b58afa0944"],
             api_sources=["BBCBusiness", "MarketWatch"],
         )
         url = stream._build_stream_url()
         assert "locale=tr" in url
         assert "region=tr" in url
         assert "lane=bist" in url
-        assert "sectors=Technology%2CFinance" in url
-        assert "tickers=AAPL%2CMSFT" in url
-        assert "categories=Market" in url
-        assert "industries=Software" in url
+        assert "symbols=AAPL%2CMSFT" in url
+        assert "categoryIds=1%2C3" in url
+        assert "sectorIds=65533e047844ee7afe9941bf" in url
+        assert "industryIds=65533e441fa5c7b58afa0944" in url
         assert "apiSource=BBCBusiness%2CMarketWatch" in url
+        assert "tickers=" not in url
 
 
 class TestNewsIntegration:
@@ -548,18 +633,24 @@ class TestNewsIntegration:
     @pytest.mark.integration
     def test_real_get_highlights(self, integration_client: LaplaceClient):
         """Test real API call for getting news highlights."""
-        highlights = integration_client.news.get_highlights(
+        response = integration_client.news.get_highlights(
             locale="tr", region=Region.US
         )
 
-        assert isinstance(highlights, NewsHighlight)
-        assert isinstance(highlights.consumer, list)
-        assert isinstance(highlights.energy_and_utilities, list)
-        assert isinstance(highlights.finance, list)
-        assert isinstance(highlights.healthcare, list)
-        assert isinstance(highlights.industrials_and_materials, list)
-        assert isinstance(highlights.tech, list)
-        assert isinstance(highlights.other, list)
+        assert isinstance(response, PaginatedResponse)
+        assert response.record_count >= 0
+        assert all(isinstance(item, NewsHighlight) for item in response.items)
+
+        for highlights in response.items:
+            assert highlights.id
+            assert isinstance(highlights.created_at, datetime)
+            assert isinstance(highlights.consumer, list)
+            assert isinstance(highlights.energy_and_utilities, list)
+            assert isinstance(highlights.finance, list)
+            assert isinstance(highlights.healthcare, list)
+            assert isinstance(highlights.industrials_and_materials, list)
+            assert isinstance(highlights.tech, list)
+            assert isinstance(highlights.other, list)
 
     @pytest.mark.asyncio
     @pytest.mark.integration
