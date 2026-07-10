@@ -996,16 +996,40 @@ class NewsHighlight(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+class ScreenerLetterGrade(str, Enum):
+    """Letter grades (A-E) used by the SMR and A/D ratings."""
+
+    A = "A"
+    B = "B"
+    C = "C"
+    D = "D"
+    E = "E"
+
+
 class ScreenerRangeFilter(BaseModel):
-    """Min/max numeric range filter for the screener."""
+    """Min/max numeric range filter for the screener.
+
+    Both bounds are optional and inclusive. If both are set, ``min`` must be
+    <= ``max`` (otherwise the API returns 400). Rows whose value is NULL in the
+    filtered column are excluded by any range filter touching it.
+    """
 
     min: Optional[float] = None
     max: Optional[float] = None
 
 
 class ScreenerFilters(BaseModel):
-    """Filters accepted by the screener endpoint."""
+    """Filters accepted by the screener endpoint.
 
+    Three filter types are supported:
+
+    - Range filters: an optional ``{min, max}`` pair per field.
+    - Letter-grade list filters: ``smr_rating`` and ``ad_rating`` accept a list
+      of grades ``A``-``E`` (IN match).
+    - Boolean filter: ``eps_acceleration`` accepts ``True``/``False``.
+    """
+
+    # Range filters
     price: Optional[ScreenerRangeFilter] = None
     daily_change: Optional[ScreenerRangeFilter] = Field(default=None, alias="dailyChange")
     pe_ratio: Optional[ScreenerRangeFilter] = Field(default=None, alias="peRatio")
@@ -1018,6 +1042,52 @@ class ScreenerFilters(BaseModel):
     three_year_return: Optional[ScreenerRangeFilter] = Field(default=None, alias="threeYearReturn")
     five_year_return: Optional[ScreenerRangeFilter] = Field(default=None, alias="fiveYearReturn")
     ytd_return: Optional[ScreenerRangeFilter] = Field(default=None, alias="ytdReturn")
+    composite_rating: Optional[ScreenerRangeFilter] = Field(default=None, alias="compositeRating")
+    composite_score: Optional[ScreenerRangeFilter] = Field(default=None, alias="compositeScore")
+    rs_rating: Optional[ScreenerRangeFilter] = Field(default=None, alias="rsRating")
+    rs_score: Optional[ScreenerRangeFilter] = Field(default=None, alias="rsScore")
+    perf_q1: Optional[ScreenerRangeFilter] = Field(default=None, alias="perfQ1")
+    perf_q2: Optional[ScreenerRangeFilter] = Field(default=None, alias="perfQ2")
+    perf_q3: Optional[ScreenerRangeFilter] = Field(default=None, alias="perfQ3")
+    perf_q4: Optional[ScreenerRangeFilter] = Field(default=None, alias="perfQ4")
+    eps_rating: Optional[ScreenerRangeFilter] = Field(default=None, alias="epsRating")
+    eps_score: Optional[ScreenerRangeFilter] = Field(default=None, alias="epsScore")
+    eps_growth_yoy: Optional[ScreenerRangeFilter] = Field(default=None, alias="epsGrowthYoy")
+    eps_growth_qoq: Optional[ScreenerRangeFilter] = Field(default=None, alias="epsGrowthQoq")
+    eps_trailing_4q: Optional[ScreenerRangeFilter] = Field(default=None, alias="epsTrailing4q")
+    ad_score: Optional[ScreenerRangeFilter] = Field(default=None, alias="adScore")
+    up_volume_ratio: Optional[ScreenerRangeFilter] = Field(default=None, alias="upVolumeRatio")
+    volume_trend: Optional[ScreenerRangeFilter] = Field(default=None, alias="volumeTrend")
+    smr_score: Optional[ScreenerRangeFilter] = Field(default=None, alias="smrScore")
+    sales_growth_2q: Optional[ScreenerRangeFilter] = Field(default=None, alias="salesGrowth2q")
+    gross_margin: Optional[ScreenerRangeFilter] = Field(default=None, alias="grossMargin")
+    net_margin: Optional[ScreenerRangeFilter] = Field(default=None, alias="netMargin")
+    roe: Optional[ScreenerRangeFilter] = None
+    sma20: Optional[ScreenerRangeFilter] = None
+    sma50: Optional[ScreenerRangeFilter] = None
+    sma150: Optional[ScreenerRangeFilter] = None
+    sma200: Optional[ScreenerRangeFilter] = None
+    volume_sma50: Optional[ScreenerRangeFilter] = Field(default=None, alias="volumeSma50")
+    price_vs_sma20: Optional[ScreenerRangeFilter] = Field(default=None, alias="priceVsSma20")
+    price_vs_sma50: Optional[ScreenerRangeFilter] = Field(default=None, alias="priceVsSma50")
+    price_vs_sma150: Optional[ScreenerRangeFilter] = Field(default=None, alias="priceVsSma150")
+    price_vs_sma200: Optional[ScreenerRangeFilter] = Field(default=None, alias="priceVsSma200")
+    high_52w: Optional[ScreenerRangeFilter] = Field(default=None, alias="high52w")
+    low_52w: Optional[ScreenerRangeFilter] = Field(default=None, alias="low52w")
+    off_high_pct: Optional[ScreenerRangeFilter] = Field(default=None, alias="offHighPct")
+    volume_vs_avg50: Optional[ScreenerRangeFilter] = Field(default=None, alias="volumeVsAvg50")
+    price_change_pct: Optional[ScreenerRangeFilter] = Field(default=None, alias="priceChangePct")
+    price_change_amount: Optional[ScreenerRangeFilter] = Field(
+        default=None, alias="priceChangeAmount"
+    )
+    ytd_change_pct: Optional[ScreenerRangeFilter] = Field(default=None, alias="ytdChangePct")
+
+    # Letter-grade list filters
+    smr_rating: Optional[List[ScreenerLetterGrade]] = Field(default=None, alias="smrRating")
+    ad_rating: Optional[List[ScreenerLetterGrade]] = Field(default=None, alias="adRating")
+
+    # Boolean filter
+    eps_acceleration: Optional[bool] = Field(default=None, alias="epsAcceleration")
 
     model_config = {"populate_by_name": True}
 
@@ -1038,10 +1108,56 @@ class ScreenerSortBy(str, Enum):
     THREE_YEAR_RETURN = "threeYearReturn"
     FIVE_YEAR_RETURN = "fiveYearReturn"
     YTD_RETURN = "ytdReturn"
+    COMPOSITE_RATING = "compositeRating"
+    COMPOSITE_SCORE = "compositeScore"
+    RS_RATING = "rsRating"
+    RS_SCORE = "rsScore"
+    PERF_Q1 = "perfQ1"
+    PERF_Q2 = "perfQ2"
+    PERF_Q3 = "perfQ3"
+    PERF_Q4 = "perfQ4"
+    EPS_RATING = "epsRating"
+    EPS_SCORE = "epsScore"
+    EPS_GROWTH_YOY = "epsGrowthYoy"
+    EPS_GROWTH_QOQ = "epsGrowthQoq"
+    EPS_TRAILING_4Q = "epsTrailing4q"
+    EPS_ACCELERATION = "epsAcceleration"
+    AD_RATING = "adRating"
+    AD_SCORE = "adScore"
+    UP_VOLUME_RATIO = "upVolumeRatio"
+    VOLUME_TREND = "volumeTrend"
+    SMR_RATING = "smrRating"
+    SMR_SCORE = "smrScore"
+    SALES_GROWTH_2Q = "salesGrowth2q"
+    GROSS_MARGIN = "grossMargin"
+    NET_MARGIN = "netMargin"
+    ROE = "roe"
+    SMA20 = "sma20"
+    SMA50 = "sma50"
+    SMA150 = "sma150"
+    SMA200 = "sma200"
+    VOLUME_SMA50 = "volumeSma50"
+    PRICE_VS_SMA20 = "priceVsSma20"
+    PRICE_VS_SMA50 = "priceVsSma50"
+    PRICE_VS_SMA150 = "priceVsSma150"
+    PRICE_VS_SMA200 = "priceVsSma200"
+    HIGH_52W = "high52w"
+    LOW_52W = "low52w"
+    OFF_HIGH_PCT = "offHighPct"
+    VOLUME_VS_AVG50 = "volumeVsAvg50"
+    PRICE_CHANGE_PCT = "priceChangePct"
+    PRICE_CHANGE_AMOUNT = "priceChangeAmount"
+    YTD_CHANGE_PCT = "ytdChangePct"
 
 
 class ScreenerStock(BaseModel):
-    """A single stock entry returned by the screener endpoint."""
+    """A single stock entry returned by the screener endpoint.
+
+    Decimal fields return 0 when there is no data. Rating integers
+    (``composite_rating``, ``rs_rating``, ``eps_rating``), letter grades
+    (``ad_rating``, ``smr_rating``) and ``eps_acceleration`` may be ``None``
+    when absent.
+    """
 
     symbol: str
     price: Optional[float] = None
@@ -1056,6 +1172,46 @@ class ScreenerStock(BaseModel):
     three_year_return: Optional[float] = Field(default=None, alias="threeYearReturn")
     five_year_return: Optional[float] = Field(default=None, alias="fiveYearReturn")
     ytd_return: Optional[float] = Field(default=None, alias="ytdReturn")
+    composite_rating: Optional[int] = Field(default=None, alias="compositeRating")
+    composite_score: Optional[float] = Field(default=None, alias="compositeScore")
+    rs_rating: Optional[int] = Field(default=None, alias="rsRating")
+    rs_score: Optional[float] = Field(default=None, alias="rsScore")
+    perf_q1: Optional[float] = Field(default=None, alias="perfQ1")
+    perf_q2: Optional[float] = Field(default=None, alias="perfQ2")
+    perf_q3: Optional[float] = Field(default=None, alias="perfQ3")
+    perf_q4: Optional[float] = Field(default=None, alias="perfQ4")
+    eps_rating: Optional[int] = Field(default=None, alias="epsRating")
+    eps_score: Optional[float] = Field(default=None, alias="epsScore")
+    eps_growth_yoy: Optional[float] = Field(default=None, alias="epsGrowthYoy")
+    eps_growth_qoq: Optional[float] = Field(default=None, alias="epsGrowthQoq")
+    eps_trailing_4q: Optional[float] = Field(default=None, alias="epsTrailing4q")
+    eps_acceleration: Optional[bool] = Field(default=None, alias="epsAcceleration")
+    ad_rating: Optional[str] = Field(default=None, alias="adRating")
+    ad_score: Optional[float] = Field(default=None, alias="adScore")
+    up_volume_ratio: Optional[float] = Field(default=None, alias="upVolumeRatio")
+    volume_trend: Optional[float] = Field(default=None, alias="volumeTrend")
+    smr_rating: Optional[str] = Field(default=None, alias="smrRating")
+    smr_score: Optional[float] = Field(default=None, alias="smrScore")
+    sales_growth_2q: Optional[float] = Field(default=None, alias="salesGrowth2q")
+    gross_margin: Optional[float] = Field(default=None, alias="grossMargin")
+    net_margin: Optional[float] = Field(default=None, alias="netMargin")
+    roe: Optional[float] = None
+    sma20: Optional[float] = None
+    sma50: Optional[float] = None
+    sma150: Optional[float] = None
+    sma200: Optional[float] = None
+    volume_sma50: Optional[float] = Field(default=None, alias="volumeSma50")
+    price_vs_sma20: Optional[float] = Field(default=None, alias="priceVsSma20")
+    price_vs_sma50: Optional[float] = Field(default=None, alias="priceVsSma50")
+    price_vs_sma150: Optional[float] = Field(default=None, alias="priceVsSma150")
+    price_vs_sma200: Optional[float] = Field(default=None, alias="priceVsSma200")
+    high_52w: Optional[float] = Field(default=None, alias="high52w")
+    low_52w: Optional[float] = Field(default=None, alias="low52w")
+    off_high_pct: Optional[float] = Field(default=None, alias="offHighPct")
+    volume_vs_avg50: Optional[float] = Field(default=None, alias="volumeVsAvg50")
+    price_change_pct: Optional[float] = Field(default=None, alias="priceChangePct")
+    price_change_amount: Optional[float] = Field(default=None, alias="priceChangeAmount")
+    ytd_change_pct: Optional[float] = Field(default=None, alias="ytdChangePct")
 
     model_config = {"populate_by_name": True}
 

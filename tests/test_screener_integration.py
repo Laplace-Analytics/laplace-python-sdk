@@ -9,6 +9,7 @@ from laplace.models import (
     PaginatedResponse,
     Region,
     ScreenerFilters,
+    ScreenerLetterGrade,
     ScreenerRangeFilter,
     ScreenerSortBy,
     ScreenerStock,
@@ -36,6 +37,46 @@ class TestScreenerIntegration:
                     "threeYearReturn": 423.26,
                     "fiveYearReturn": 1589.99,
                     "ytdReturn": 27.04,
+                    "compositeRating": 93,
+                    "compositeScore": 88.2,
+                    "rsRating": 88,
+                    "rsScore": 0.91,
+                    "perfQ1": 3.2,
+                    "perfQ2": 5.1,
+                    "perfQ3": 9.0,
+                    "perfQ4": 12.4,
+                    "epsRating": 85,
+                    "epsScore": 0.77,
+                    "epsGrowthYoy": 34.0,
+                    "epsGrowthQoq": 21.0,
+                    "epsTrailing4q": 65.2,
+                    "epsAcceleration": True,
+                    "adRating": "A",
+                    "adScore": 0.65,
+                    "upVolumeRatio": 1.4,
+                    "volumeTrend": 0.2,
+                    "smrRating": "B",
+                    "smrScore": 0.72,
+                    "salesGrowth2q": 18.0,
+                    "grossMargin": 42.0,
+                    "netMargin": 12.5,
+                    "roe": 27.0,
+                    "sma20": 305.1,
+                    "sma50": 290.4,
+                    "sma150": 250.7,
+                    "sma200": 240.9,
+                    "volumeSma50": 12500000,
+                    "priceVsSma20": 2.4,
+                    "priceVsSma50": 7.6,
+                    "priceVsSma150": 24.6,
+                    "priceVsSma200": 29.7,
+                    "high52w": 320.0,
+                    "low52w": 180.0,
+                    "offHighPct": -2.3,
+                    "volumeVsAvg50": 1.3,
+                    "priceChangePct": 1.24,
+                    "priceChangeAmount": 3.8,
+                    "ytdChangePct": 12.4,
                 }
             ],
             "recordCount": 511,
@@ -49,8 +90,11 @@ class TestScreenerIntegration:
                 filters=ScreenerFilters(
                     price=ScreenerRangeFilter(min=10.5, max=500.0),
                     pe_ratio=ScreenerRangeFilter(min=5.0),
+                    composite_rating=ScreenerRangeFilter(min=90),
+                    roe=ScreenerRangeFilter(min=20),
+                    off_high_pct=ScreenerRangeFilter(min=-15, max=0),
                 ),
-                sort_by=ScreenerSortBy.MARKET_CAP,
+                sort_by=ScreenerSortBy.COMPOSITE_RATING,
                 sort_order=SortDirection.DESC,
                 page=1,
                 page_size=20,
@@ -67,8 +111,11 @@ class TestScreenerIntegration:
             "filters": {
                 "price": {"min": 10.5, "max": 500.0},
                 "peRatio": {"min": 5.0},
+                "compositeRating": {"min": 90.0},
+                "roe": {"min": 20.0},
+                "offHighPct": {"min": -15.0, "max": 0.0},
             },
-            "sortBy": "marketCap",
+            "sortBy": "compositeRating",
             "sortOrder": "desc",
         }
 
@@ -90,6 +137,19 @@ class TestScreenerIntegration:
         assert stock.three_year_return == 423.26
         assert stock.five_year_return == 1589.99
         assert stock.ytd_return == 27.04
+        assert stock.composite_rating == 93
+        assert stock.composite_score == 88.2
+        assert stock.rs_rating == 88
+        assert stock.rs_score == 0.91
+        assert stock.eps_rating == 85
+        assert stock.eps_acceleration is True
+        assert stock.ad_rating == "A"
+        assert stock.smr_rating == "B"
+        assert stock.roe == 27.0
+        assert stock.sma200 == 240.9
+        assert stock.price_vs_sma200 == 29.7
+        assert stock.off_high_pct == -2.3
+        assert stock.ytd_change_pct == 12.4
 
     def test_screen_nullable_fields(self):
         mock_response_data = {
@@ -118,6 +178,46 @@ class TestScreenerIntegration:
 
         _, kwargs = mock_request.call_args
         assert kwargs["json"] == {"page": 2, "pageSize": 50}
+
+    def test_screen_letter_grade_and_boolean_filters(self):
+        mock_response_data = {"items": [], "recordCount": 0}
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "_request", return_value=mock_response_data) as mock_request:
+            client.screener.screen(
+                region=Region.TR,
+                filters=ScreenerFilters(
+                    smr_rating=[ScreenerLetterGrade.A, ScreenerLetterGrade.B],
+                    ad_rating=[ScreenerLetterGrade.A],
+                    eps_acceleration=True,
+                ),
+                sort_by=ScreenerSortBy.SMR_RATING,
+            )
+
+        _, kwargs = mock_request.call_args
+        assert kwargs["json"] == {
+            "page": 1,
+            "pageSize": 20,
+            "filters": {
+                "smrRating": ["A", "B"],
+                "adRating": ["A"],
+                "epsAcceleration": True,
+            },
+            "sortBy": "smrRating",
+        }
+
+    def test_screen_eps_acceleration_false_is_sent(self):
+        mock_response_data = {"items": [], "recordCount": 0}
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "_request", return_value=mock_response_data) as mock_request:
+            client.screener.screen(
+                region=Region.TR,
+                filters=ScreenerFilters(eps_acceleration=False),
+            )
+
+        _, kwargs = mock_request.call_args
+        assert kwargs["json"]["filters"] == {"epsAcceleration": False}
 
     def test_screen_us_region_rejected(self):
         client = LaplaceClient(api_key="test-key")

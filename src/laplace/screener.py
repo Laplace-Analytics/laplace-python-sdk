@@ -48,7 +48,7 @@ class ScreenerClient:
         body: dict = {"page": page, "pageSize": page_size}
 
         if filters is not None:
-            filters_body = filters.model_dump(by_alias=True, exclude_none=True)
+            filters_body = filters.model_dump(mode="json", by_alias=True, exclude_none=True)
             if filters_body:
                 body["filters"] = filters_body
         if sort_by is not None:
