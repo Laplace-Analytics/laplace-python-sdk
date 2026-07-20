@@ -4,6 +4,7 @@ from .base import BaseClient
 from .brokers import BrokersClient
 from .capital_increase import CapitalIncreaseClient
 from .collections import CollectionsClient
+from .halka_arz import HalkaArzClient
 from .earnings import EarningsClient
 from .financials import FinancialsClient
 from .funds import FundsClient
@@ -37,6 +38,7 @@ class LaplaceClient(BaseClient):
         self.politicians = PoliticianClient(self)
         self.brokers = BrokersClient(self)
         self.capital_increase = CapitalIncreaseClient(self)
+        self.halka_arz = HalkaArzClient(self)
         self.earnings = EarningsClient(self)
         self.search = SearchClient(self)
         self.state = StateClient(self)

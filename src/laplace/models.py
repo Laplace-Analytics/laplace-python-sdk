@@ -851,6 +851,39 @@ class CapitalIncrease(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class HalkaArz(BaseModel):
+    """IPO (halka arz) offering model."""
+
+    id: int
+    company_name: str = Field(alias="companyName")
+    symbol: Optional[str]
+    instrument_id: Optional[int] = Field(alias="instrumentId")
+    price_min: Optional[float] = Field(alias="priceMin")
+    price_max: Optional[float] = Field(alias="priceMax")
+    demand_start_date: Optional[datetime] = Field(alias="demandStartDate")
+    demand_end_date: Optional[datetime] = Field(alias="demandEndDate")
+    first_trading_date: Optional[datetime] = Field(alias="firstTradingDate")
+    shares_offered: Optional[float] = Field(alias="sharesOffered")
+    offering_size: Optional[float] = Field(alias="offeringSize")
+    offering_type: Optional[str] = Field(alias="offeringType")
+    consortium_leader: Optional[str] = Field(alias="consortiumLeader")
+    additional_shares: Optional[float] = Field(alias="additionalShares")
+    distribution_method: Optional[str] = Field(alias="distributionMethod")
+    free_float_rate: Optional[float] = Field(alias="freeFloatRate")
+    intended_market: Optional[str] = Field(alias="intendedMarket")
+    sector: Optional[str]
+    max_lot_per_investor: Optional[float] = Field(alias="maxLotPerInvestor")
+    currency: str
+    related_disclosure_ids: List[int] = Field(alias="relatedDisclosureIds")
+    reviewed: bool
+    created_at: datetime = Field(alias="createdAt")
+    updated_at: datetime = Field(alias="updatedAt")
+    status: str
+    is_fixed_price: bool = Field(alias="isFixedPrice")
+
+    model_config = {"populate_by_name": True}
+
+
 class SearchResultStock(BaseModel):
     """Search result stock model."""
 
