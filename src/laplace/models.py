@@ -715,6 +715,7 @@ class BrokerSort(str, Enum):
     TOTAL_BUY_VOLUME = "totalBuyVolume"
     TOTAL_SELL_AMOUNT = "totalSellAmount"
     TOTAL_SELL_VOLUME = "totalSellVolume"
+    NET_VOLUME = "netVolume"
 
 
 class SortDirection(str, Enum):

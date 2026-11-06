@@ -273,6 +273,36 @@ class TestBrokersIntegration:
         assert total_stats.total_sell_volume == 175000
 
     @patch("httpx.Client")
+    def test_get_broker_list_for_market_sorted_by_net_volume(self, mock_httpx_client):
+        """Test that the net volume sort option is sent as the sortBy query param."""
+        mock_response_data = {
+            "items": [],
+            "totalStats": {
+                "netAmount": 0,
+                "totalAmount": 0,
+                "totalVolume": 0,
+                "totalBuyAmount": 0,
+                "totalBuyVolume": 0,
+                "totalSellAmount": 0,
+                "totalSellVolume": 0,
+            },
+            "recordCount": 0,
+        }
+
+        client = LaplaceClient(api_key="test-key")
+
+        with patch.object(client, "get", return_value=mock_response_data) as mock_get:
+            client.brokers.get_broker_list_for_market(
+                region=Region.TR,
+                sort_by=BrokerSort.NET_VOLUME,
+                sort_direction=SortDirection.DESC,
+                from_date=datetime(2025, 6, 1),
+                to_date=datetime(2025, 6, 30),
+            )
+
+        assert mock_get.call_args.kwargs["params"]["sortBy"] == "netVolume"
+
+    @patch("httpx.Client")
     def test_get_broker_list_for_stock(self, mock_httpx_client):
         """Test getting broker list for a specific stock with real API response."""
         # Real API response from /api/v1/brokers/SASA?region=tr&sortBy=netAmount&sortDirection=desc&fromDate=2024-01-01&toDate=2024-01-31&page=0&size=10
