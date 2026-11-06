@@ -55,6 +55,17 @@ class TestModelConfig:
         assert stats.net_amount == 50.0
         assert stats.total_volume == 1500.0
 
+    def test_broker_stats_net_volume(self):
+        """Test netVolume is read from responses and may be absent."""
+        response = {
+            "totalBuyAmount": 100.0, "totalSellAmount": 50.0,
+            "netAmount": 50.0, "totalBuyVolume": 1000.0,
+            "totalSellVolume": 500.0, "totalVolume": 1500.0,
+            "totalAmount": 150.0,
+        }
+        assert BrokerStats.model_validate(response).net_volume is None
+        assert BrokerStats.model_validate({**response, "netVolume": 500.0}).net_volume == 500.0
+
 
 class TestBaseClient:
     """Tests for BaseClient functionality."""
