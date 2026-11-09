@@ -682,6 +682,7 @@ class BrokerStats(BaseModel):
     net_amount: float = Field(alias="netAmount")
     total_buy_volume: float = Field(alias="totalBuyVolume")
     total_sell_volume: float = Field(alias="totalSellVolume")
+    net_volume: Optional[float] = Field(alias="netVolume", default=None)
     total_volume: float = Field(alias="totalVolume")
     total_amount: float = Field(alias="totalAmount")
     average_cost: Optional[float] = Field(alias="averageCost", default=None)
@@ -715,6 +716,7 @@ class BrokerSort(str, Enum):
     TOTAL_BUY_VOLUME = "totalBuyVolume"
     TOTAL_SELL_AMOUNT = "totalSellAmount"
     TOTAL_SELL_VOLUME = "totalSellVolume"
+    NET_VOLUME = "netVolume"
 
 
 class SortDirection(str, Enum):
