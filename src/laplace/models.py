@@ -841,10 +841,60 @@ class NewsType(str, Enum):
     REUTERS = "reuters"
 
 class NewsOrderBy(str, Enum):
-    """News order by options."""
+    """News order by options.
+
+    ``TIMESTAMP`` is deprecated: use ``PUBLISHED_AT`` on v2. ``QUALITY_SCORE``
+    is the older spelling of ``QUALITY_SCORE_V2``; both are accepted. The
+    other fields are accepted by :meth:`~laplace.news.NewsClient.get_news_v2`.
+    """
 
     TIMESTAMP = "timestamp"
     QUALITY_SCORE = "quality_score"
+    PUBLISHED_AT = "publishedAt"
+    INGESTED_AT = "ingestedAt"
+    UPDATED_AT = "updatedAt"
+    QUALITY_SCORE_V2 = "qualityScore"
+
+
+class NewsTickerRelevance(str, Enum):
+    """How central a tagged company is to an article.
+
+    ``PRIMARY``: the article is about this company (at most one per article).
+    ``MENTIONED``: named with some substance. ``LISTED``: only appears in a
+    list, ranking or market table.
+    """
+
+    PRIMARY = "primary"
+    MENTIONED = "mentioned"
+    LISTED = "listed"
+
+
+class NewsEventType(str, Enum):
+    """Event type slugs for the ``event_types`` / ``exclude_event_types`` filters.
+
+    :meth:`~laplace.news.NewsClient.get_news_event_types` returns the current
+    list with localized names. Slugs not listed here can be passed as strings.
+    """
+
+    FINANCIAL_RESULTS = "financial-results"
+    GUIDANCE = "guidance"
+    OPERATIONAL_DATA = "operational-data"
+    ORDERS_INVESTMENTS = "orders-investments"
+    MANAGEMENT_CHANGE = "management-change"
+    REGULATION = "regulation"
+    LITIGATION = "litigation"
+    CREDIT_RATING = "credit-rating"
+    DIVIDEND = "dividend"
+    ANALYST_REPORT = "analyst-report"
+    PRICE_ACTION_TECHNICAL = "price-action-technical"
+    OTHER = "other"
+
+
+class NewsOriginality(str, Enum):
+    """Values of :attr:`NewsV2.originality`."""
+
+    ORIGINAL = "original"
+    REWRITE = "rewrite"
 
 
 class NewsLane(str, Enum):
@@ -861,15 +911,40 @@ class NewsLane(str, Enum):
 
 
 class NewsTicker(BaseModel):
+    """A company tagged on a news item.
+
+    ``id`` is empty if the symbol has no listing. ``region`` and
+    ``relevance`` are set on v2 and stream items; ``relevance`` holds a
+    :class:`NewsTickerRelevance` value, or ``""`` when not classified. Both
+    are plain strings so values added later still parse.
+    """
+
     id: str
     name: str
     symbol: Optional[str] = None
+    region: Optional[str] = None
+    relevance: Optional[str] = None
 
     model_config = {"populate_by_name": True}
 
+
+class NewsEventTypeInfo(BaseModel):
+    """An event type with its localized name.
+
+    Attached to news items as ``event_type`` and returned by
+    :meth:`~laplace.news.NewsClient.get_news_event_types`.
+    """
+
+    slug: str
+    name: str
+    language: str
+
+    model_config = {"populate_by_name": True}
+
+
 class NewsPublisher(BaseModel):
     name: str
-    logo_url: Optional[str] = Field(alias="logoUrl")
+    logo_url: Optional[str] = Field(alias="logoUrl", default=None)
 
     model_config = {"populate_by_name": True}
 
@@ -963,6 +1038,33 @@ class News(BaseModel):
     model_config = {"populate_by_name": True}
 
 class NewsV2(BaseModel):
+    """A news item from the v2 endpoint and the live news stream.
+
+    Fields added after the first v2 release default to ``None`` / ``False``
+    when a response doesn't carry them.
+
+    Attributes:
+        id: Stable ID; it stays the same when the article is updated or
+            replaced by a higher-trust copy.
+        created_at: Same as ``ingested_at``.
+        timestamp: Deprecated. ``published_at`` if known, else
+            ``ingested_at``. Use ``published_at``.
+        quality_score: 0-10; 0 means not scored yet.
+        published_at: When the source published it; ``None`` when the source
+            gave no usable date.
+        ingested_at: When Laplace first stored it.
+        content_updated_at: Last time the title or text changed; ``None`` if
+            it never changed.
+        updated_at: Last change of any kind. Use it with ``updated_since``.
+        primary_ticker: The one company the article is about, if any.
+        is_list_article: ``True`` for market wraps, rankings and lists.
+        event_type: ``None`` until the article is classified.
+        cluster_id: The story this article belongs to.
+        is_cluster_lead: ``True`` for the first report of the story.
+        cluster_size: How many articles cover the story.
+        originality: A :class:`NewsOriginality` value.
+    """
+
     id: str
     created_at: datetime = Field(alias="createdAt")
     url: str
@@ -980,7 +1082,50 @@ class NewsV2(BaseModel):
 
     quality_score: int = Field(alias="qualityScore")
 
+    published_at: Optional[datetime] = Field(alias="publishedAt", default=None)
+    ingested_at: Optional[datetime] = Field(alias="ingestedAt", default=None)
+    content_updated_at: Optional[datetime] = Field(alias="contentUpdatedAt", default=None)
+    updated_at: Optional[datetime] = Field(alias="updatedAt", default=None)
+    primary_ticker: Optional[str] = Field(alias="primaryTicker", default=None)
+    is_list_article: bool = Field(alias="isListArticle", default=False)
+    event_type: Optional[NewsEventTypeInfo] = Field(alias="eventType", default=None)
+    cluster_id: Optional[str] = Field(alias="clusterId", default=None)
+    is_cluster_lead: bool = Field(alias="isClusterLead", default=False)
+    cluster_size: Optional[int] = Field(alias="clusterSize", default=None)
+    originality: Optional[str] = None
+
     model_config = {"populate_by_name": True}
+
+
+class NewsPublisherCap(BaseModel):
+    """How ``max_publisher_share`` was applied to a v2 news result.
+
+    ``achieved_share`` is the largest share any publisher actually has. It
+    can be above ``share`` when only a few publishers cover the query.
+    """
+
+    share: float
+    per_publisher: int = Field(alias="perPublisher")
+    achieved_share: float = Field(alias="achievedShare")
+
+    model_config = {"populate_by_name": True}
+
+
+class NewsV2Page(PaginatedResponse[NewsV2]):
+    """A page of v2 news.
+
+    A :class:`PaginatedResponse` subclass, so ``record_count`` and ``items``
+    read as before. ``record_count`` is ``None`` when ``include_total=False``.
+    ``next_cursor`` is ``None`` on the last page; ``publisher_cap`` is set only
+    when ``max_publisher_share`` was sent.
+    """
+
+    record_count: Optional[int] = Field(alias="recordCount", default=None)
+    next_cursor: Optional[str] = Field(alias="nextCursor", default=None)
+    publisher_cap: Optional[NewsPublisherCap] = Field(alias="publisherCap", default=None)
+
+    model_config = {"populate_by_name": True}
+
 class NewsHighlight(BaseModel):
     """A daily categorized news highlight as returned by /api/v1/news/highlights."""
 

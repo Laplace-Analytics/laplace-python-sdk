@@ -144,6 +144,89 @@ holdings = client.politicians.get_politician_holdings_by_symbol(symbol="AAPL")
 top_holdings = client.politicians.get_top_holdings()
 ```
 
+### News Client
+
+`get_news_v2` returns a `NewsV2Page`: a `PaginatedResponse[NewsV2]` with `next_cursor` and `publisher_cap` added. Multi-value filters take a list or a comma-separated string, and enum values and plain strings can be mixed. Filters you don't set aren't sent.
+
+```python
+from laplace.models import NewsEventType, NewsOrderBy, NewsTickerRelevance, Region, SortDirection
+
+# News about one company: drop table-only mentions and market wraps,
+# cap any publisher at 25% of the result and show each story once.
+page = client.news.get_news_v2(
+    locale="tr",
+    region=Region.TR,
+    symbols=["THYAO"],
+    ticker_relevance=[NewsTickerRelevance.PRIMARY, NewsTickerRelevance.MENTIONED],
+    exclude_list_articles=True,
+    collapse_clusters=True,
+    max_publisher_share=25,
+    event_types=[NewsEventType.FINANCIAL_RESULTS, NewsEventType.DIVIDEND],
+    order_by=[
+        (NewsOrderBy.QUALITY_SCORE_V2, SortDirection.DESC),
+        (NewsOrderBy.PUBLISHED_AT, SortDirection.DESC),
+    ],
+    page_size=50,  # any value from 1 to 100
+)
+for item in page.items:
+    print(item.primary_ticker, item.content.title, item.event_type, item.cluster_size)
+```
+
+```python
+# Cursor paging: iter_news_v2 follows next_cursor until the last page and
+# sends include_total=False. It takes the same arguments as get_news_v2,
+# except page.
+for item in client.news.iter_news_v2(
+    "tr", Region.TR, symbols="THYAO", page_size=100, published_from="2026-11-01"
+):
+    handle(item)
+```
+
+```python
+from datetime import timedelta
+
+# Incremental sync: upsert by id, then store the largest updated_at minus
+# 5 minutes as the next updated_since. quality_score_min=0 makes articles
+# whose score is later lowered still arrive as updates.
+latest = None
+for item in client.news.iter_news_v2(
+    "tr",
+    Region.TR,
+    updated_since=last_sync,  # datetime or RFC3339 string
+    quality_score_min=0,
+    page_size=100,
+):
+    store.upsert(item.id, item)
+    if item.updated_at and (latest is None or item.updated_at > latest):
+        latest = item.updated_at
+if latest is not None:
+    last_sync = latest - timedelta(minutes=5)
+```
+
+`record_count` is `None` when `include_total=False` (and in `iter_news_v2`). `published_at` and `content_updated_at` are `None` when unknown. `timestamp`, `timestamp_from` and `timestamp_to` are deprecated: use `published_at` and `published_from` / `published_to`.
+
+The API rejects unknown values with a `400`, raised as `LaplaceAPIError`. The API's message is in `error.response["message"]`.
+
+```python
+# Lookups
+event_types = client.news.get_news_event_types(locale="tr")
+categories = client.news.get_news_categories(locale="tr")  # ids for category_ids
+lanes = client.news.get_news_lanes(region=Region.TR)
+
+# Live news with the same content filters
+stream = await client.news.get_news_stream(
+    locale="tr",
+    region=Region.TR,
+    symbols=["THYAO", "GARAN"],
+    exclude_list_articles=True,
+    event_types=[NewsEventType.FINANCIAL_RESULTS],
+)
+async for result in stream:
+    if result.data:
+        for item in result.data:
+            print(item.primary_ticker, item.published_at)
+```
+
 ### WebSocket Client (Live Price Data)
 
 ```python
