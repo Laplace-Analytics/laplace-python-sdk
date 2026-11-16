@@ -17,6 +17,7 @@ from laplace.models import (
     USStockLiveData,
     BISTBidAskData,
     WebsocketMonthlyUsageDataResponse,
+    WebsocketUrlResponse,
 )
 from laplace.base import BaseClient
 BidAskData = BISTBidAskData
@@ -403,11 +404,11 @@ class LivePriceClient:
         self,
         feeds: List[LivePriceFeed],
         external_user_id: str
-    ) -> str:
+    ) -> WebsocketUrlResponse:
         """Get WebSocket URL from the API.
 
         Returns:
-            WebSocket URL
+            WebsocketUrlResponse with the WebSocket URL and when it expires
         """
 
         feed_values = [feed.value for feed in feeds]
@@ -420,7 +421,7 @@ class LivePriceClient:
             },
         )
 
-        return response["url"]
+        return WebsocketUrlResponse(**response)
 
     def get_websocket_usage_for_month(
         self,
