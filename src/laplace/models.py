@@ -1363,6 +1363,13 @@ class ScreenerStock(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class WebsocketUrlResponse(BaseModel):
+    url: str
+    expires_at: datetime = Field(alias="expiresAt")
+
+    model_config = {"populate_by_name": True}
+
+
 class WebsocketMonthlyUsageDataResponse(BaseModel):
     external_user_id: str = Field(alias="externalUserID")
     first_connection_time: datetime = Field(alias="firstConnectionTime")

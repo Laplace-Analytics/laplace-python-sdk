@@ -22,6 +22,8 @@ The official Python SDK for the Laplace stock data platform. Get easy access to 
 pip install laplace-python-sdk
 ```
 
+> **Upgrading from v1?** v2 changes `client.live_price.get_websocket_url` to return a `WebsocketUrlResponse` (with `url` and `expires_at`) instead of a string. Where you used the result as the URL, use `.url` instead, e.g. `websockets.connect(resp.url)`. The link stops working at `expires_at`; request a new one before then.
+
 ## Quick Start
 
 ```python

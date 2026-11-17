@@ -1,6 +1,6 @@
 """Integration tests for live price client."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import asyncio
 from unittest.mock import Mock, patch
@@ -24,8 +24,12 @@ class TestLivePriceUnit:
 
         client = LaplaceClient(api_key="test-key")
 
-        with patch.object(client, "post", return_value={"url": "wss://example.com/ws/123"}) as mock_post:
-            url = client.live_price.get_websocket_url(
+        with patch.object(
+            client,
+            "post",
+            return_value={"url": "wss://example.com/ws/123", "expiresAt": "2026-11-17T15:00:00+03:00"},
+        ) as mock_post:
+            resp = client.live_price.get_websocket_url(
                 feeds=[LivePriceFeed.LIVE_BIST],
                 external_user_id="test-user",
             )
@@ -34,7 +38,8 @@ class TestLivePriceUnit:
             "v2/ws/url",
             json={"externalUserId": "test-user", "feeds": ["live_price_tr"]},
         )
-        assert url == "wss://example.com/ws/123"
+        assert resp.url == "wss://example.com/ws/123"
+        assert resp.expires_at == datetime(2026, 11, 17, 12, 0, tzinfo=timezone.utc)
 
     @patch("httpx.Client")
     def test_get_websocket_usage_endpoint(self, mock_httpx_client):
@@ -580,10 +585,10 @@ class TestLivePriceIntegration:
     @pytest.mark.integration
     def test_real_get_websocket_url(self, integration_client: LaplaceClient):
         """Test real API call for getting WebSocket URL."""
-        url = integration_client.live_price.get_websocket_url(
+        resp = integration_client.live_price.get_websocket_url(
             feeds=[LivePriceFeed.LIVE_BIST],
             external_user_id="test-user-123",
         )
 
-        assert isinstance(url, str)
-        assert url.startswith("wss://") or url.startswith("ws://")
+        assert resp.url.startswith("wss://") or resp.url.startswith("ws://")
+        assert resp.expires_at > datetime.now(timezone.utc)
