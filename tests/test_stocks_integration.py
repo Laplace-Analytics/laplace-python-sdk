@@ -1,6 +1,6 @@
 """Integration tests for stocks client."""
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 
 import pytest
@@ -223,6 +223,11 @@ class TestStocksIntegration:
         formatted = client.stocks._format_datetime(test_dt)
 
         assert formatted == "2024-10-15 14:30:45"
+
+        # The API reads the value as UTC, so a timezone-aware value is sent in UTC
+        istanbul = timezone(timedelta(hours=3))
+        bist_open = datetime(2024, 10, 15, 10, 0, 0, tzinfo=istanbul)
+        assert client.stocks._format_datetime(bist_open) == "2024-10-15 07:00:00"
 
     def test_get_stock_price(self):
         """Test getting stock price data with aliases (1D, 1W etc.)."""

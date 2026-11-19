@@ -1,6 +1,6 @@
 """Stocks client for Laplace API."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional, Union
 
@@ -66,7 +66,13 @@ class StocksClient:
         self._client = base_client
 
     def _format_datetime(self, dt: datetime) -> str:
-        """Format datetime to API required format: YYYY-MM-DD HH:MM:SS"""
+        """Format datetime to API required format: YYYY-MM-DD HH:MM:SS.
+
+        The API reads this format as UTC, so timezone-aware values are converted
+        to UTC first. Naive values are sent as they are.
+        """
+        if dt.tzinfo is not None:
+            dt = dt.astimezone(timezone.utc)
         return dt.strftime("%Y-%m-%d %H:%M:%S")
 
     def get_all(
@@ -170,8 +176,10 @@ class StocksClient:
         Args:
             symbol: Stock symbol or stock ID
             region: Region code (tr, us)
-            from_date: Start date and time
-            to_date: End date and time
+            from_date: Start date and time. Naive values are read as UTC;
+                timezone-aware values are converted to UTC.
+            to_date: End date and time. Naive values are read as UTC;
+                timezone-aware values are converted to UTC.
             interval: Price interval (use HistoricalPriceInterval enum or string)
 
         Returns:
