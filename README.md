@@ -84,6 +84,7 @@ stock = client.stocks.get_detail_by_id(stock_id="stock-id", locale="en")
 prices = client.stocks.get_price(region="us", symbols=["AAPL", "GOOGL"], keys=["1D", "1W"])
 
 # Get historical prices with custom interval
+# Naive datetimes are read as UTC; timezone-aware ones are converted to UTC
 from datetime import datetime
 from laplace.stocks import HistoricalPriceInterval
 

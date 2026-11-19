@@ -176,8 +176,10 @@ class StocksClient:
         Args:
             symbol: Stock symbol or stock ID
             region: Region code (tr, us)
-            from_date: Start date and time
-            to_date: End date and time
+            from_date: Start date and time. Naive values are read as UTC;
+                timezone-aware values are converted to UTC.
+            to_date: End date and time. Naive values are read as UTC;
+                timezone-aware values are converted to UTC.
             interval: Price interval (use HistoricalPriceInterval enum or string)
 
         Returns:
